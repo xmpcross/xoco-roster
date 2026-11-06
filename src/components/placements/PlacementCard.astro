@@ -1,0 +1,55 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { placementHref, type Placement } from "@/lib/content";
+
+interface Props {
+  placement: Placement;
+  sector?: string;
+  headingLevel?: "h2" | "h3";
+}
+
+const { placement, sector, headingLevel = "h3" } = Astro.props;
+const { title, role, client, location, metrics } = placement.data;
+const Heading = headingLevel;
+const [lead] = metrics;
+---
+
+<article class="placement-card card group relative flex h-full flex-col p-6 sm:p-7">
+  <p class="flex flex-wrap items-center justify-between gap-2 text-[0.8125rem] text-muted">
+    {sector && <span class="pill">{sector}</span>}
+    <span class="flex items-center gap-1"><Icon name="map-pin" class="size-3.5" />{location}</span>
+  </p>
+  <p class="mt-8 text-[clamp(2.75rem,2rem+2.4vw,3.75rem)] leading-none font-medium tracking-[-0.045em] tabular">{lead.value}</p>
+  <p class="mt-2 text-sm text-muted">{lead.label}</p>
+  <div class="mt-auto pt-8">
+    <p class="text-[0.8125rem] text-muted">{role} · {client}</p>
+    <Heading class="mt-1.5 text-lg leading-snug tracking-[-0.015em]">
+      <a href={placementHref(placement)} class="after:absolute after:inset-0">{title}</a>
+    </Heading>
+    <span class="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent">
+      Read the case study <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+    </span>
+  </div>
+</article>
+
+<style>
+  .placement-card {
+    transition:
+      box-shadow 0.25s,
+      transform 0.25s var(--ease-out-expo);
+  }
+
+  .placement-card:hover {
+    box-shadow: var(--shadow-float);
+    transform: translateY(-2px);
+  }
+
+  .placement-card a:focus-visible {
+    outline: none;
+  }
+
+  .placement-card:has(a:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+</style>

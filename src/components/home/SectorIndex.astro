@@ -1,0 +1,83 @@
+---
+import { Image } from "astro:assets";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { getJobs, getSectors, sectorHref, tally } from "@/lib/content";
+
+interface Props {
+  title: string;
+  lead?: string;
+}
+
+const { title, lead } = Astro.props;
+const [sectors, jobs] = await Promise.all([getSectors(), getJobs()]);
+const counts = tally(jobs.map((job) => job.data.sector.id));
+---
+
+<section class="section" aria-labelledby="sectors-title">
+  <div class="shell">
+    <SectionHead title={title} lead={lead} id="sectors-title">
+      <a href="/sectors/" class="btn btn-outline">All practices <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+    </SectionHead>
+
+    <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        sectors.map((sector, i) => (
+          <li class="reveal" style={`--i:${i % 3}`}>
+            <a href={sectorHref(sector.id)} class="sector-card card group flex h-full flex-col p-2">
+              <span class="relative block aspect-16/10 overflow-hidden rounded-[0.8rem] bg-wash">
+                <Image
+                  src={sector.data.image}
+                  alt=""
+                  widths={[400, 640, 800]}
+                  sizes="(min-width: 1024px) 26rem, (min-width: 640px) 50vw, 100vw"
+                  class="photo-zoom size-full object-cover group-hover:scale-[1.04]"
+                />
+                <span class="absolute top-3 left-3 grid size-9 place-items-center rounded-lg bg-surface/90 backdrop-blur">
+                  <Icon name={sector.data.icon} class="size-4" />
+                </span>
+              </span>
+              <span class="flex flex-1 flex-col p-4 pb-3">
+                <span class="text-title">{sector.data.title}</span>
+                <span class="mt-1.5 text-[0.9375rem] text-muted">{sector.data.summary}</span>
+                <span class="mt-auto flex items-center justify-between pt-5 text-sm">
+                  <span class="flex items-center gap-2 text-muted">
+                    <span class="live-dot" aria-hidden="true" />
+                    <span class="tabular">{counts[sector.id] ?? 0} live roles</span>
+                  </span>
+                  <span class="sector-arrow grid size-8 place-items-center rounded-full bg-paper">
+                    <Icon name="arrow-up-right" class="size-4" stroke={2} />
+                  </span>
+                </span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .sector-card {
+    transition:
+      box-shadow 0.25s,
+      transform 0.25s var(--ease-out-expo);
+  }
+
+  .sector-card:hover {
+    box-shadow: var(--shadow-float);
+    transform: translateY(-2px);
+  }
+
+  .sector-arrow {
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .sector-card:hover .sector-arrow {
+    background: var(--ink);
+    color: #fff;
+  }
+</style>

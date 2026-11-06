@@ -1,0 +1,52 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const lead = "How we collect, use and protect the details of clients, candidates and visitors to this site.";
+const updated = "1 October 2026";
+---
+
+<BaseLayout title="Privacy notice" description={lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Privacy" }]} title="Privacy notice" lead={lead}>
+    <p slot="aside" class="chip mt-6 text-muted"><Icon name="calendar" class="size-3.5" />Last updated {updated}</p>
+  </PageHero>
+
+  <section class="pb-24 lg:pb-32">
+    <div class="shell grid gap-12 lg:grid-cols-12">
+      <aside class="lg:col-span-3">
+        <div class="card p-5 lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+          <span class="grid size-10 place-items-center rounded-xl bg-accent-soft text-accent" aria-hidden="true"><Icon name="circle-alert" class="size-4.5" /></span>
+          <p class="mt-4 text-sm text-muted">
+            This is sample text for the {siteConfig.name} theme. Replace it with a notice written for your firm and reviewed by your adviser before you launch.
+          </p>
+        </div>
+      </aside>
+      <div class="prose lg:col-span-7 lg:col-start-5">
+        <h2 id="who-we-are">Who we are</h2>
+        <p>
+          {siteConfig.name} is an executive search and recruitment firm with offices in London and New York. For the purposes of UK and EU data protection law we are the controller of the personal data described in this notice. You can reach our privacy team at <a href="mailto:privacy@example.com">privacy@example.com</a>.
+        </p>
+
+        <h2 id="candidates">Candidates</h2>
+        <p>When you apply for a role, register with us or speak to a consultant, we collect the details you give us: your name and contact details, your CV, your employment history, your salary and notice period, and any notes from our conversations.</p>
+        <ul>
+          <li>We use these details to assess your fit for roles, to contact you about opportunities and to introduce you to clients with your agreement.</li>
+          <li>We never send your CV or name to a client without asking you first.</li>
+          <li>We keep your details for two years from our last contact, then delete them unless you ask us to keep them.</li>
+          <li>Our lawful basis is your consent, and our legitimate interest in running searches on behalf of clients.</li>
+        </ul>
+
+        <h2 id="clients">Clients</h2>
+        <p>When you brief us on a vacancy we keep your contact details and the details of the role so we can run the search, prepare proposals and invoice. We keep client records for seven years for accounting purposes.</p>
+
+        <h2 id="website">This website</h2>
+        <p>This site does not use advertising cookies. Forms send what you type to us only when you press submit. The salary calculator runs entirely in your browser and nothing you enter is stored or sent.</p>
+
+        <h2 id="your-rights">Your rights</h2>
+        <p>You can ask to see, correct, export or delete the personal data we hold about you, or object to how we use it, at any time. Email <a href="mailto:privacy@example.com">privacy@example.com</a> and we will reply within one month. You can also complain to your data protection authority.</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

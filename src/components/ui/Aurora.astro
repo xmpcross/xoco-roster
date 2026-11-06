@@ -1,0 +1,175 @@
+---
+interface Props {
+  /** `band` runs behind the hero search, `horizon` rises from the bottom edge of the closing call to action. */
+  variant?: "band" | "horizon";
+}
+
+const { variant = "band" } = Astro.props;
+---
+
+<div class:list={["aurora pointer-events-none absolute -z-10", `aurora-${variant}`]} aria-hidden="true">
+  <div class="aurora-field">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+    <span class="blob blob-4"></span>
+    <span class="blob blob-5"></span>
+  </div>
+  <div class="grain"></div>
+</div>
+
+<style>
+  .aurora-field {
+    position: absolute;
+    inset: 0;
+    opacity: 0.85;
+    filter: blur(64px);
+  }
+
+  /* Above the blur so it stays sharp. */
+  .grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2.6' intercept='-0.8'/%3E%3CfeFuncG type='linear' slope='2.6' intercept='-0.8'/%3E%3CfeFuncB type='linear' slope='2.6' intercept='-0.8'/%3E%3CfeFuncA type='linear' slope='0' intercept='1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px;
+    mix-blend-mode: soft-light;
+    opacity: 0.75;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 999px;
+  }
+
+  .blob-1 {
+    background: #3d48f5;
+  }
+
+  .blob-2 {
+    background: #7c85ff;
+  }
+
+  .blob-3 {
+    background: #aab1ff;
+  }
+
+  .blob-4 {
+    background: #d3c4ff;
+  }
+
+  .blob-5 {
+    background: #ffcbb1;
+  }
+
+  /* Full bleed from inside the shell. */
+  .aurora-band {
+    top: -9rem;
+    bottom: -11rem;
+    left: 50%;
+    width: 100vw;
+    translate: -50% 0;
+    mask-image: linear-gradient(to bottom, transparent, #000 35%, #000 58%, transparent 92%);
+  }
+
+  .aurora-band .grain {
+    mask-image: linear-gradient(to bottom, transparent 30%, #000 48%, #000 62%, transparent 82%);
+  }
+
+  .aurora-band .blob-1 {
+    left: -16%;
+    top: 30%;
+    width: 34%;
+    height: 62%;
+  }
+
+  .aurora-band .blob-2 {
+    left: 16%;
+    top: 18%;
+    width: 34%;
+    height: 70%;
+  }
+
+  .aurora-band .blob-3 {
+    left: 40%;
+    top: 26%;
+    width: 30%;
+    height: 64%;
+  }
+
+  .aurora-band .blob-4 {
+    right: 10%;
+    top: 20%;
+    width: 30%;
+    height: 66%;
+  }
+
+  .aurora-band .blob-5 {
+    right: -8%;
+    top: 36%;
+    width: 26%;
+    height: 52%;
+  }
+
+  .aurora-horizon {
+    inset: auto 0 0;
+    height: 75%;
+    mask-image: linear-gradient(to top, #000 15%, transparent);
+  }
+
+  .aurora-horizon .grain {
+    mask-image: linear-gradient(to top, #000 10%, transparent 60%);
+  }
+
+  .aurora-horizon .blob-1 {
+    left: -8%;
+    bottom: -40%;
+    width: 36%;
+    height: 80%;
+  }
+
+  .aurora-horizon .blob-2 {
+    left: 16%;
+    bottom: -48%;
+    width: 36%;
+    height: 90%;
+  }
+
+  .aurora-horizon .blob-3 {
+    left: 40%;
+    bottom: -42%;
+    width: 28%;
+    height: 85%;
+  }
+
+  .aurora-horizon .blob-4 {
+    right: 10%;
+    bottom: -46%;
+    width: 30%;
+    height: 85%;
+  }
+
+  .aurora-horizon .blob-5 {
+    right: -8%;
+    bottom: -36%;
+    width: 26%;
+    height: 70%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .blob-1,
+    .blob-3 {
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+
+    .blob-2,
+    .blob-4 {
+      animation: drift 22s ease-in-out -6s infinite alternate-reverse;
+    }
+  }
+
+  @keyframes drift {
+    to {
+      transform: translate3d(5%, -5%, 0) scale(1.06);
+    }
+  }
+</style>

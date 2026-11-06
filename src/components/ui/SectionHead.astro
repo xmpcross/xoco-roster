@@ -1,0 +1,19 @@
+---
+interface Props {
+  title: string;
+  lead?: string;
+  /** Heading id, for `aria-labelledby` on the section. */
+  id?: string;
+  class?: string;
+}
+
+const { title, lead, id, class: className } = Astro.props;
+---
+
+<div class:list={["reveal flex flex-wrap items-end justify-between gap-x-10 gap-y-6", className]}>
+  <div class="max-w-2xl">
+    <h2 id={id} class="text-display-lg">{title}</h2>
+    {lead && <p class="mt-4 text-lead text-muted">{lead}</p>}
+  </div>
+  <slot />
+</div>

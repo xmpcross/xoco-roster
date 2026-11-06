@@ -1,0 +1,41 @@
+---
+interface Props {
+  title: string;
+  lead: string;
+  points: { title: string; body: string }[];
+  /** Puts the illustration on the left from `lg` up. */
+  flip?: boolean;
+  id: string;
+}
+
+const { title, lead, points, flip = false, id } = Astro.props;
+---
+
+<section class="overflow-x-clip py-[clamp(3.5rem,2.5rem+4vw,7rem)]" aria-labelledby={id}>
+  <div class="shell grid items-center gap-x-16 gap-y-14 lg:grid-cols-12">
+    <div class:list={["reveal lg:col-span-5", flip && "lg:order-2 lg:col-start-8"]}>
+      <h2 id={id} class="max-w-md text-display-md">{title}</h2>
+      <p class="mt-4 max-w-md text-lead">{lead}</p>
+      <dl class="mt-9 grid max-w-md gap-6">
+        {
+          points.map((point) => (
+            <div>
+              <dt class="font-medium">{point.title}</dt>
+              <dd class="mt-1 text-[0.9375rem] text-muted">{point.body}</dd>
+            </div>
+          ))
+        }
+      </dl>
+      {
+        Astro.slots.has("actions") && (
+          <div class="mt-9 flex flex-wrap gap-3">
+            <slot name="actions" />
+          </div>
+        )
+      }
+    </div>
+    <div class:list={["reveal py-10 sm:py-14 lg:col-span-7", flip && "lg:order-1"]}>
+      <slot />
+    </div>
+  </div>
+</section>

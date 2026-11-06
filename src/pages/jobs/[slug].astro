@@ -1,0 +1,207 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { render } from "astro:content";
+import FileField from "@/components/forms/FileField.astro";
+import ShareSheet from "@/components/insights/ShareSheet.astro";
+import JobRow from "@/components/jobs/JobRow.astro";
+import ConsultantPanel from "@/components/people/ConsultantPanel.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { applyCopy, jobAlert } from "@/config/jobs";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { findPerson, formatDate, formatSalary, getJobs, getSectors, getTeam, jobHref, sectorHref } from "@/lib/content";
+import { jobSchema } from "@/lib/schema";
+
+export const getStaticPaths = (async () => {
+  const jobs = await getJobs();
+  return jobs.map((job) => {
+    const others = jobs.filter((other) => other.id !== job.id);
+    const similar = [...others.filter((other) => other.data.sector.id === job.data.sector.id), ...others.filter((other) => other.data.sector.id !== job.data.sector.id)].slice(0, 3);
+    return { params: { slug: job.id }, props: { job, similar } };
+  });
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { job, similar } = Astro.props;
+const { Content } = await render(job);
+const [sectors, team] = await Promise.all([getSectors(), getTeam()]);
+const sector = sectors.find((item) => item.id === job.data.sector.id);
+const consultant = findPerson(team, job.data.consultant.id);
+const shortName = (id: string) => sectors.find((item) => item.id === id)?.data.short;
+const { title, ref, client, location, workMode, type, seniority, salary, posted, closes, summary } = job.data;
+const form = siteConfig.forms.apply;
+const url = new URL(jobHref(job), siteConfig.siteUrl).toString();
+
+const facts = [
+  { label: "Package", value: formatSalary(salary, { long: true }), note: salary.note },
+  { label: "Location", value: location },
+  { label: "Work mode", value: workMode },
+  { label: "Contract", value: type },
+  { label: "Level", value: seniority },
+  closes ? { label: "Closes", value: formatDate(closes) } : { label: "Posted", value: formatDate(posted) },
+];
+---
+
+<BaseLayout title={`${title}, ${location}`} description={summary} structuredData={jobSchema(job, job.rendered?.html ?? summary)}>
+  <article>
+    <header class="pt-10 sm:pt-14">
+      <div class="shell">
+        <nav aria-label="Breadcrumb" class="rise label text-muted">
+          <ol class="flex flex-wrap items-center gap-2">
+            <li><a href="/jobs/" class="hover:text-ink">Jobs</a></li>
+            <li aria-hidden="true">/</li>
+            {sector && <li><a href={sectorHref(sector.id)} class="hover:text-ink">{sector.data.title}</a></li>}
+            <li aria-hidden="true">/</li>
+            <li aria-current="page" class="text-ink">{ref}</li>
+          </ol>
+        </nav>
+        <div class="mt-8 grid gap-x-10 gap-y-6 lg:grid-cols-12 lg:items-end">
+          <div class="lg:col-span-8">
+            <p class="rise pill tone-up"><span class="live-dot"></span> Open · posted {formatDate(posted)}</p>
+            <h1 class="rise mt-5 text-display-xl" style="--i:1">{title}</h1>
+            <p class="rise mt-4 text-lead text-muted" style="--i:2">{client}</p>
+          </div>
+          <div class="rise flex flex-wrap gap-3 lg:col-span-4 lg:justify-end" style="--i:3">
+            <a href="#apply" class="btn btn-accent btn-lg">Apply now <Icon name="arrow-down" class="size-4" stroke={2} /></a>
+            <button type="button" class="btn btn-outline btn-lg" aria-haspopup="dialog" data-share-open hidden>
+              <Icon name="social-share" class="size-4" /> <span class="sr-only sm:not-sr-only">Share</span>
+            </button>
+          </div>
+        </div>
+        <dl class="rise card mt-10 grid grid-cols-2 gap-2 p-2 md:grid-cols-3 lg:grid-cols-6" style="--i:4">
+          {
+            facts.map((fact) => (
+              <div class="rounded-xl bg-paper p-4">
+                <dt class="text-[0.8125rem] text-muted">{fact.label}</dt>
+                <dd class="mt-1 text-[1.0625rem] leading-snug font-medium tracking-[-0.015em]">{fact.value}</dd>
+                {fact.note && <dd class="meta mt-0.5">{fact.note}</dd>}
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </header>
+
+    <div class="shell grid gap-6 py-10 lg:grid-cols-12 lg:gap-8 lg:py-14">
+      <div class="card min-w-0 p-6 sm:p-10 lg:col-span-8">
+        <p class="text-title">{summary}</p>
+        <div class="prose mt-8">
+          <Content />
+        </div>
+      </div>
+      <aside class="lg:col-span-4">
+        <div class="grid gap-4 lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+          {consultant && <ConsultantPanel person={consultant} label="Running this search" />}
+          <div class="flex gap-4 rounded-card bg-accent-soft p-5 text-sm">
+            <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-surface text-accent">
+              <Icon name="shield-check" class="size-5" stroke={1.75} />
+            </span>
+            <div>
+              <p class="text-[0.9375rem] font-medium">Confidential by default</p>
+              <p class="mt-1 text-muted">We never share your details with a client without asking you first, and we name the client before your first interview.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </article>
+
+  <section id="apply" class="scroll-mt-24 py-10 lg:py-16" aria-labelledby="apply-title">
+    <div class="shell grid gap-6 lg:grid-cols-12 lg:gap-8">
+      <div class="lg:col-span-4">
+        <p class="chip">{ref} · {title}</p>
+        <h2 id="apply-title" class="mt-5 text-display-md">{applyCopy.title}</h2>
+        <p class="mt-4 text-muted">{applyCopy.lead}</p>
+        <ol class="mt-8 grid gap-2 text-[0.9375rem]">
+          {
+            [
+              { icon: "file-text", text: "Your consultant reads it" },
+              { icon: "phone", text: "A 20-minute call if it fits" },
+              { icon: "handshake", text: "We introduce you to the client" },
+            ].map((step) => (
+              <li class="flex items-center gap-3 rounded-xl bg-surface p-2.5 shadow-card">
+                <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
+                  <Icon name={step.icon} class="size-4" stroke={1.75} />
+                </span>
+                {step.text}
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+
+      <form class="apply-form card p-6 sm:p-9 lg:col-span-8" action={form.action || undefined} method={form.method} enctype="multipart/form-data" data-form data-demo={form.action ? undefined : ""}>
+        <input type="hidden" name="job_ref" value={ref} />
+        <input type="hidden" name="job_title" value={title} />
+        <div class="grid gap-6" data-form-body>
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label for="apply-name" class="field-label">Full name</label>
+              <input id="apply-name" name="name" type="text" autocomplete="name" required class="field" />
+            </div>
+            <div>
+              <label for="apply-email" class="field-label">Email</label>
+              <input id="apply-email" name="email" type="email" autocomplete="email" required class="field" />
+            </div>
+            <div>
+              <label for="apply-phone" class="field-label">Phone</label>
+              <input id="apply-phone" name="phone" type="tel" autocomplete="tel" required class="field" />
+            </div>
+            <div>
+              <label for="apply-linkedin" class="field-label">LinkedIn profile (optional)</label>
+              <input id="apply-linkedin" name="linkedin" type="url" placeholder="https://www.linkedin.com/in/…" class="field" />
+            </div>
+            <div>
+              <label for="apply-notice" class="field-label">Notice period</label>
+              <select id="apply-notice" name="notice" required class="field">
+                <option value="">Choose one</option>
+                {applyCopy.noticeOptions.map((option) => <option>{option}</option>)}
+              </select>
+            </div>
+            <div>
+              <label for="apply-salary" class="field-label">Current package (optional)</label>
+              <input id="apply-salary" name="current_package" type="text" placeholder="Base plus bonus" class="field" />
+            </div>
+          </div>
+          <FileField id="apply-cv" name="cv" label="CV" required />
+          <div>
+            <label for="apply-note" class="field-label">A note for {consultant?.data.name.split(" ")[0] ?? "the consultant"} (optional)</label>
+            <textarea id="apply-note" name="note" rows="4" class="field" placeholder="Why this role, and anything we should know about timing."></textarea>
+          </div>
+          <label class="flex items-start gap-3 text-sm text-muted">
+            <input type="checkbox" name="consent" required class="check mt-0.5" />
+            <span>{applyCopy.consent} <a href="/privacy/#candidates" class="link text-ink">Read the notice</a>.</span>
+          </label>
+          <button type="submit" class="btn btn-accent btn-lg justify-self-start">Send application <Icon name="send" class="size-4" stroke={2} /></button>
+        </div>
+        <div class="grid gap-3" role="status" data-form-success hidden>
+          <span class="grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+            <Icon name="circle-check" class="size-6" stroke={1.75} />
+          </span>
+          <p class="mt-2 text-display-md">Application received.</p>
+          <p class="max-w-lg text-muted">{consultant?.data.name ?? "Your consultant"} will be in touch within two working days. While you wait, registering means we can put you forward for roles that never reach the board.</p>
+          <a href={jobAlert.href} class="btn btn-primary mt-3 justify-self-start">{jobAlert.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  {
+    similar.length > 0 && (
+      <section class="section" aria-labelledby="similar-title">
+        <div class="shell">
+          <div class="flex flex-wrap items-end justify-between gap-6">
+            <h2 id="similar-title" class="text-display-md">Similar roles</h2>
+            <a href="/jobs/" class="btn btn-outline">All roles <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+          </div>
+          <div class="mt-8 grid gap-3">
+            {similar.map((item) => <JobRow job={item} sector={shortName(item.data.sector.id)} />)}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <ShareSheet title={`${title}, ${location}`} url={url} />
+</BaseLayout>

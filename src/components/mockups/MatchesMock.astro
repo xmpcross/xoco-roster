@@ -1,0 +1,65 @@
+---
+import { getEntry } from "astro:content";
+import { Image } from "astro:assets";
+import Icon from "@/components/ui/Icon.astro";
+import { candidateView } from "@/config/showcase";
+import { findPerson, formatSalary, getJobs, getTeam } from "@/lib/content";
+
+const [jobs, team, sector] = await Promise.all([getJobs(), getTeam(), getEntry("sectors", candidateView.sector)]);
+const inSector = jobs.filter((job) => job.data.sector.id === candidateView.sector);
+const matches = (inSector.length >= 3 ? inSector : jobs).slice(0, 3);
+const consultant = (sector && findPerson(team, sector.data.lead.id)) ?? team[0];
+const icon = sector?.data.icon ?? "briefcase";
+---
+
+<div class="mock-stage" aria-hidden="true">
+  <div class="mock w-[min(100%,34rem)] p-4 sm:p-5">
+    <div class="flex items-center justify-between gap-4">
+      <span class="flex items-center gap-2.5">
+        <Image src={candidateView.photo} alt="" width={80} height={80} class="size-9 rounded-full object-cover object-top" />
+        <span>
+          <span class="block font-medium">Good morning, {candidateView.name}</span>
+          <span class="block text-[0.75rem] text-muted">{matches.length} new roles match your profile</span>
+        </span>
+      </span>
+      <span class="hidden items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-[0.75rem] text-muted sm:flex">
+        <span class="live-dot"></span> Open to offers
+      </span>
+    </div>
+
+    <ul class="mt-5 grid gap-2">
+      {
+        matches.map((job, i) => (
+          <li class:list={["flex items-center gap-3 rounded-xl p-3", i === 0 ? "bg-surface shadow-[0_0_0_1.5px_var(--accent),0_8px_20px_-10px_rgb(43_54_242/0.4)]" : "bg-paper"]}>
+            <span class:list={["grid size-9 shrink-0 place-items-center rounded-lg", i === 0 ? "bg-accent-soft text-accent" : "bg-surface"]}>
+              <Icon name={icon} class="size-4" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-2">
+                <span class="truncate font-medium">{job.data.title}</span>
+                {i === 0 && <span class="tone-accent rounded-full px-1.5 text-[0.6875rem] font-medium">New</span>}
+              </span>
+              <span class="block truncate text-[0.75rem] text-muted">
+                {job.data.location} · {job.data.workMode}
+              </span>
+            </span>
+            <span class="shrink-0 text-right text-[0.78rem] font-medium tabular">{formatSalary(job.data.salary)}</span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="mt-4 flex items-center justify-between text-[0.75rem] text-muted">
+      <span class="flex items-center gap-1.5"><Icon name="lock" class="size-3.5" /> Hidden from your current employer</span>
+      <span class="font-medium text-accent">View all</span>
+    </p>
+  </div>
+
+  <div class="mock-float -top-8 right-0 hidden w-72 items-center gap-3 p-3 sm:flex lg:-right-4">
+    <Image src={consultant.data.photo} alt="" width={72} height={72} class="size-9 shrink-0 rounded-full object-cover object-top" />
+    <span class="min-w-0">
+      <span class="block truncate"><span class="font-medium">{consultant.data.name.split(" ")[0]}</span> {candidateView.shared}</span>
+      <span class="block truncate text-[0.75rem] text-muted">{matches[0].data.title} · 2 min ago</span>
+    </span>
+  </div>
+</div>

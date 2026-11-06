@@ -1,0 +1,33 @@
+---
+import { Image } from "astro:assets";
+import { personHref, type Person } from "@/lib/content";
+
+interface Props {
+  person: Person;
+  eager?: boolean;
+}
+
+const { person, eager = false } = Astro.props;
+const { name, role, office, focus, photo, photoAlt } = person.data;
+---
+
+<article class="group relative">
+  <div class="relative aspect-4/5 overflow-hidden rounded-card bg-wash">
+    <Image
+      src={photo}
+      alt={photoAlt}
+      widths={[320, 480, 640]}
+      sizes="(min-width: 1024px) 20rem, (min-width: 640px) 45vw, 100vw"
+      loading={eager ? "eager" : "lazy"}
+      class="photo-zoom size-full object-cover object-top group-hover:scale-[1.03]"
+    />
+    <span class="absolute top-3 left-3 rounded-full bg-surface/90 px-2.5 py-1 text-[0.75rem] font-medium backdrop-blur">{office}</span>
+  </div>
+  <div class="mt-4 min-w-0">
+    <h3 class="text-lg tracking-[-0.015em]">
+      <a href={personHref(person)} class="after:absolute after:inset-0 group-hover:text-accent">{name}</a>
+    </h3>
+    <p class="mt-0.5 text-[0.9375rem] text-ink-soft">{role}</p>
+    <p class="mt-2 text-sm text-muted">{focus}</p>
+  </div>
+</article>

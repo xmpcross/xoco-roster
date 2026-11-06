@@ -1,0 +1,26 @@
+---
+import PersonCard from "@/components/people/PersonCard.astro";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { teamSection } from "@/config/home";
+import { getTeam } from "@/lib/content";
+
+const team = (await getTeam()).slice(0, 4);
+---
+
+<section class="section" aria-labelledby="team-title">
+  <div class="shell">
+    <SectionHead title={teamSection.title} lead={teamSection.lead} id="team-title">
+      <a href="/team/" class="btn btn-outline">All consultants <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+    </SectionHead>
+    <div class="mt-12 grid grid-cols-2 gap-x-3 gap-y-10 sm:gap-x-5 lg:grid-cols-4">
+      {
+        team.map((person, i) => (
+          <div class="reveal" style={`--i:${i}`}>
+            <PersonCard person={person} />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

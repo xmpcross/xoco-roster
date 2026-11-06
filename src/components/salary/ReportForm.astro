@@ -1,0 +1,61 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import { getSectors } from "@/lib/content";
+
+interface Props {
+  /** Prefix for field ids. */
+  id?: string;
+}
+
+const { id = "report" } = Astro.props;
+const { report, forms } = siteConfig;
+const form = forms.report;
+const sectors = await getSectors();
+---
+
+<form
+  class="grid gap-4"
+  action={form.action || undefined}
+  method={form.method}
+  data-form
+  data-demo={form.action ? undefined : ""}
+>
+  <div class="grid gap-4" data-form-body>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <label for={`${id}-name`} class="field-label">Name</label>
+        <input id={`${id}-name`} name="name" type="text" autocomplete="name" required class="field" />
+      </div>
+      <div>
+        <label for={`${id}-email`} class="field-label">Work email</label>
+        <input id={`${id}-email`} name="email" type="email" autocomplete="email" required class="field" />
+      </div>
+    </div>
+    <div>
+      <label for={`${id}-sector`} class="field-label">Your sector</label>
+      <select id={`${id}-sector`} name="sector" class="field">
+        <option value="">All sectors</option>
+        {sectors.map((sector) => <option value={sector.id}>{sector.data.title}</option>)}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-accent justify-self-start">
+      <Icon name="download" class="size-4" stroke={2} />
+      Get the {report.title.replace(/^The /, "")}
+    </button>
+    <p class="text-xs text-muted">We send the PDF by email and add you to The Shortlist. Unsubscribe any time.</p>
+  </div>
+  <div class="grid gap-3" role="status" data-form-success hidden>
+    <Icon name="circle-check" class="size-8 text-accent" stroke={1.75} />
+    <p class="text-title">Check your inbox.</p>
+    <p class="text-muted">{report.title} is on its way to you.</p>
+    {
+      report.file && (
+        <a href={report.file} class="btn btn-primary justify-self-start" download>
+          <Icon name="download" class="size-4" stroke={2} /> Download now
+        </a>
+      )
+    }
+  </div>
+</form>
+

@@ -1,0 +1,66 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+
+interface Props {
+  id: string;
+  name: string;
+  label: string;
+  hint?: string;
+  accept?: string;
+  required?: boolean;
+}
+
+const { id, name, label, hint = "PDF or Word, up to 10 MB", accept = ".pdf,.doc,.docx", required = false } = Astro.props;
+const prompt = "Choose a file or drop it here";
+---
+
+<div>
+  <span class="field-label" id={`${id}-label`}>{label}</span>
+  <label for={id} class="file-drop relative flex cursor-pointer items-center gap-4 rounded-xl bg-surface p-3.5" data-file>
+    <span class="file-icon grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+      <Icon name="upload" class="size-5" stroke={1.75} />
+    </span>
+    <span class="min-w-0">
+      <span class="block truncate font-medium" data-file-name data-default={prompt}>{prompt}</span>
+      <span class="block text-sm text-muted">{hint}</span>
+    </span>
+    <input id={id} name={name} type="file" accept={accept} required={required} aria-labelledby={`${id}-label`} class="absolute inset-0 cursor-pointer rounded-xl opacity-0" />
+  </label>
+</div>
+
+<style>
+  .file-drop {
+    box-shadow:
+      0 0 0 1px var(--line),
+      0 1px 2px rgb(23 23 26 / 0.04);
+    transition:
+      box-shadow 0.15s,
+      background-color 0.15s;
+  }
+
+  .file-drop:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--ink) 22%, var(--line)),
+      0 1px 2px rgb(23 23 26 / 0.04);
+  }
+
+  .file-drop:has(input:focus-visible) {
+    box-shadow:
+      0 0 0 1px var(--accent),
+      0 0 0 4px var(--accent-soft);
+  }
+
+  .file-drop[data-has-file] {
+    background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+    box-shadow: 0 0 0 1.5px var(--accent);
+  }
+
+  .file-drop[data-has-file] .file-icon {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  :global(.was-validated) .file-drop:has(input:invalid) {
+    box-shadow: 0 0 0 1px var(--down);
+  }
+</style>

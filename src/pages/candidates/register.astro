@@ -1,0 +1,202 @@
+---
+import FileField from "@/components/forms/FileField.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import { candidates, register } from "@/config/candidates";
+import { employmentTypes, seniorities, workModes } from "@/config/jobs";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getSectors } from "@/lib/content";
+
+const sectors = await getSectors();
+const form = siteConfig.forms.register;
+---
+
+<BaseLayout title={register.title} description={register.lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Candidates", href: "/candidates/" }, { label: "Register" }]} title={register.title} lead={register.lead} />
+
+  <section class="pb-24 lg:pb-32" aria-label="Registration form">
+    <div class="shell grid gap-6 lg:grid-cols-12 lg:gap-8">
+      <form class="lg:col-span-8" action={form.action || undefined} method={form.method} enctype="multipart/form-data" data-form data-demo={form.action ? undefined : ""}>
+        <div class="grid gap-4" data-form-body>
+          <fieldset class="block-set card p-6 sm:p-8">
+            <legend>About you</legend>
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label for="r-name" class="field-label">Full name</label>
+                <input id="r-name" name="name" type="text" autocomplete="name" required class="field" />
+              </div>
+              <div>
+                <label for="r-email" class="field-label">Email</label>
+                <input id="r-email" name="email" type="email" autocomplete="email" required class="field" />
+              </div>
+              <div>
+                <label for="r-phone" class="field-label">Phone</label>
+                <input id="r-phone" name="phone" type="tel" autocomplete="tel" required class="field" />
+              </div>
+              <div>
+                <label for="r-location" class="field-label">Where you live</label>
+                <input id="r-location" name="location" type="text" autocomplete="address-level2" required class="field" />
+              </div>
+              <div class="sm:col-span-2">
+                <label for="r-linkedin" class="field-label">LinkedIn profile (optional)</label>
+                <input id="r-linkedin" name="linkedin" type="url" placeholder="https://www.linkedin.com/in/…" class="field" />
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="block-set card p-6 sm:p-8">
+            <legend>Where you are now</legend>
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label for="r-title" class="field-label">Current job title</label>
+                <input id="r-title" name="current_title" type="text" autocomplete="organization-title" required class="field" />
+              </div>
+              <div>
+                <label for="r-level" class="field-label">Level</label>
+                <select id="r-level" name="level" required class="field">
+                  <option value="">Choose one</option>
+                  {seniorities.map((level) => <option>{level}</option>)}
+                </select>
+              </div>
+            </div>
+            <fieldset class="mt-6">
+              <legend class="field-label">Sectors you work in</legend>
+              <div class="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {
+                  sectors.map((sector) => (
+                    <label class="option flex cursor-pointer items-center gap-3 rounded-lg bg-paper px-3 py-2.5 text-[0.9375rem]">
+                      <input type="checkbox" name="sectors" value={sector.id} class="check" />
+                      {sector.data.title}
+                    </label>
+                  ))
+                }
+              </div>
+            </fieldset>
+            <div class="mt-6">
+              <FileField id="r-cv" name="cv" label="CV" required />
+            </div>
+          </fieldset>
+
+          <fieldset class="block-set card p-6 sm:p-8">
+            <legend>What would tempt you</legend>
+            <div class="grid gap-6 sm:grid-cols-2">
+              <fieldset>
+                <legend class="field-label">Work mode</legend>
+                <div class="grid gap-2">
+                  {
+                    workModes.map((mode) => (
+                      <label class="option flex cursor-pointer items-center gap-3 rounded-lg bg-paper px-3 py-2.5 text-[0.9375rem]">
+                        <input type="checkbox" name="work_mode" value={mode} class="check" />
+                        {mode}
+                      </label>
+                    ))
+                  }
+                </div>
+              </fieldset>
+              <fieldset>
+                <legend class="field-label">Contract</legend>
+                <div class="grid gap-2">
+                  {
+                    employmentTypes.map((type) => (
+                      <label class="option flex cursor-pointer items-center gap-3 rounded-lg bg-paper px-3 py-2.5 text-[0.9375rem]">
+                        <input type="checkbox" name="contract" value={type} class="check" />
+                        {type}
+                      </label>
+                    ))
+                  }
+                </div>
+              </fieldset>
+              <div>
+                <label for="r-salary" class="field-label">Target base (optional)</label>
+                <input id="r-salary" name="target_salary" type="text" placeholder="e.g. £150k, or $1,200 a day" class="field" />
+              </div>
+              <div>
+                <label for="r-notice" class="field-label">Notice period</label>
+                <select id="r-notice" name="notice" required class="field">
+                  <option value="">Choose one</option>
+                  {register.notice.map((option) => <option>{option}</option>)}
+                </select>
+              </div>
+              <div class="sm:col-span-2">
+                <label for="r-move" class="field-label">What would make a move worthwhile? (optional)</label>
+                <textarea id="r-move" name="motivation" rows="4" placeholder="The scope, the people, the money, the commute. Whatever matters." class="field"></textarea>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="card grid gap-4 p-6 sm:p-8">
+            <label class="flex items-start gap-3 text-sm text-muted">
+              <input type="checkbox" name="consent" required class="check mt-0.5" />
+              <span>{register.consent} <a href="/privacy/#candidates" class="link text-ink">Read the notice</a>.</span>
+            </label>
+            <label class="flex items-start gap-3 text-sm text-muted">
+              <input type="checkbox" name="newsletter" class="check mt-0.5" />
+              <span>{register.marketing}</span>
+            </label>
+            <button type="submit" class="btn btn-accent btn-lg mt-4 justify-self-start">Register <Icon name="arrow-right" class="btn-arrow" stroke={2} /></button>
+          </div>
+        </div>
+
+        <div class="card grid gap-4 p-6 sm:p-9" role="status" data-form-success hidden>
+          <span class="grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+            <Icon name="circle-check" class="size-6" stroke={1.75} />
+          </span>
+          <p class="mt-2 text-display-md">You are registered.</p>
+          <p class="max-w-xl text-lead text-muted">The consultant who covers your field will be in touch within a week. In the meantime, the live roles are worth a look.</p>
+          <a href="/jobs/" class="btn btn-primary mt-4 justify-self-start">See live roles <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+        </div>
+      </form>
+
+      <aside class="lg:col-span-4">
+        <div class="card p-3 lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+          <ul class="grid gap-1">
+            {
+              candidates.promises.map((item) => (
+                <li class="flex gap-4 rounded-xl p-3">
+                  <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+                    <Icon name={item.icon} class="size-5" stroke={1.75} />
+                  </span>
+                  <span>
+                    <span class="block text-[0.9375rem] font-medium">{item.title}</span>
+                    <span class="mt-1 block text-sm text-muted">{item.body}</span>
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .block-set > legend {
+    width: 100%;
+    float: left;
+    margin-bottom: 1.5rem;
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .block-set > legend + * {
+    clear: both;
+  }
+
+  .option {
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+
+  .option:hover {
+    background: var(--wash);
+  }
+
+  .option:has(input:checked) {
+    background: var(--accent-soft);
+  }
+</style>

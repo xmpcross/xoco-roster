@@ -1,0 +1,44 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import InsightsHeader from "@/components/insights/InsightsHeader.astro";
+import Pagination from "@/components/insights/Pagination.astro";
+import PostCard from "@/components/insights/PostCard.astro";
+import { insightsDescription, POSTS_PER_PAGE } from "@/config/insights";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getPosts, leadPost } from "@/lib/posts";
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const posts = await getPosts();
+  const lead = leadPost(posts);
+  const ordered = lead ? [lead, ...posts.filter((post) => post !== lead)] : posts;
+  return paginate(ordered, { pageSize: POSTS_PER_PAGE });
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page } = Astro.props as Props;
+const posts = page.data;
+const first = page.currentPage === 1;
+const [lead, ...rest] = first ? posts : [undefined, ...posts];
+---
+
+<BaseLayout
+  title={first ? "Insights" : `Insights, page ${page.currentPage}`}
+  description={insightsDescription}
+  prevUrl={page.url.prev}
+  nextUrl={page.url.next}
+>
+  <InsightsHeader title="Insights" description={insightsDescription} />
+  <div class="shell pb-24 lg:pb-32">
+    {lead && <PostCard post={lead} variant="lead" headingLevel="h2" eager />}
+    {
+      rest.length > 0 && (
+        <div class:list={["grid gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3", lead && "mt-20"]}>
+          {rest.map((post, i) => post && <PostCard post={post} headingLevel="h2" eager={!lead && i < 3} />)}
+        </div>
+      )
+    }
+    {posts.length === 0 && <p class="text-lead text-muted">Nothing published yet.</p>}
+    <Pagination current={page.currentPage} last={page.lastPage} base="/insights/" />
+  </div>
+</BaseLayout>

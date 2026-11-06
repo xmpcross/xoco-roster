@@ -1,0 +1,66 @@
+---
+import Feature from "@/components/home/Feature.astro";
+import Hero from "@/components/home/Hero.astro";
+import LatestInsights from "@/components/home/LatestInsights.astro";
+import LatestRoles from "@/components/home/LatestRoles.astro";
+import PeopleField from "@/components/home/PeopleField.astro";
+import Placements from "@/components/home/Placements.astro";
+import SectorIndex from "@/components/home/SectorIndex.astro";
+import Team from "@/components/home/Team.astro";
+import CandidateMock from "@/components/mockups/CandidateMock.astro";
+import MatchesMock from "@/components/mockups/MatchesMock.astro";
+import SalaryMock from "@/components/mockups/SalaryMock.astro";
+import SearchMock from "@/components/mockups/SearchMock.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { features, sectorsSection } from "@/config/home";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const { shortlist, process, candidates, salary } = features;
+---
+
+<BaseLayout>
+  <Hero />
+  <PeopleField />
+
+  <Feature id="shortlist-title" {...shortlist}>
+    <CandidateMock />
+    <a slot="actions" href={shortlist.action.href} class="btn btn-primary">
+      {shortlist.action.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+    </a>
+  </Feature>
+
+  <Feature id="process-title" flip {...process}>
+    <SearchMock />
+    <a slot="actions" href={process.action.href} class="btn btn-outline">
+      {process.action.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+    </a>
+  </Feature>
+
+  <LatestRoles />
+
+  <Feature id="candidates-title" {...candidates}>
+    <MatchesMock />
+    <a slot="actions" href={candidates.primary.href} class="btn btn-primary">
+      {candidates.primary.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+    </a>
+    <a slot="actions" href={candidates.secondary.href} class="btn btn-outline">{candidates.secondary.label}</a>
+  </Feature>
+
+  <Feature id="salary-title" flip {...salary}>
+    <SalaryMock />
+    <a slot="actions" href={salary.primary.href} class="btn btn-primary">
+      {salary.primary.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+    </a>
+    <a slot="actions" href={salary.secondary.href} class="btn btn-outline">
+      <Icon name="download" class="size-4" stroke={2} />
+      {salary.secondary.label}
+    </a>
+  </Feature>
+
+  <SectorIndex {...sectorsSection} />
+  <Placements />
+  <Team />
+  <LatestInsights />
+  <Closing />
+</BaseLayout>

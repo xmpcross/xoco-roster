@@ -1,0 +1,91 @@
+---
+import { Image } from "astro:assets";
+import Icon from "@/components/ui/Icon.astro";
+import { searchProgress } from "@/config/showcase";
+import { findPerson, getTeam } from "@/lib/content";
+
+const team = await getTeam();
+const consultant = findPerson(team, searchProgress.consultant) ?? team[0];
+const { title, client, day, length, steps, funnel, message } = searchProgress;
+const top = funnel[0].count;
+---
+
+<div class="mock-stage" aria-hidden="true">
+  <div class="mock w-[min(100%,33rem)] p-4 sm:p-5">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-[0.75rem] text-muted">{client}</p>
+        <p class="mt-0.5 text-[1.0625rem] font-medium tracking-[-0.015em]">{title}</p>
+      </div>
+      <span class="flex items-center gap-1.5 text-[0.75rem] text-muted">
+        <Image src={consultant.data.photo} alt="" width={64} height={64} class="size-6 rounded-full object-cover object-top" />
+        {consultant.data.name}
+      </span>
+    </div>
+
+    <div class="mt-4">
+      <p class="flex justify-between text-[0.75rem]">
+        <span class="font-medium">Day {day} of {length}</span>
+        <span class="text-up">On track</span>
+      </p>
+      <span class="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-wash">
+        <span class="block h-full rounded-full bg-accent" style={`width:${(day / length) * 100}%`}></span>
+      </span>
+    </div>
+
+    <ol class="mt-5 grid">
+      {
+        steps.map((step, i) => (
+          <li class="relative grid grid-cols-[1.5rem_minmax(0,1fr)_auto] gap-x-3 pb-4 last:pb-0">
+            {i < steps.length - 1 && (
+              <span class:list={["absolute top-6 bottom-0 left-[0.7rem] w-px", step.state === "done" ? "bg-accent" : "bg-line"]} />
+            )}
+            <span
+              class:list={[
+                "relative grid size-6 place-items-center rounded-full",
+                step.state === "done" && "bg-accent text-white",
+                step.state === "current" && "bg-surface shadow-[0_0_0_2px_var(--accent),0_0_0_6px_var(--accent-soft)]",
+                step.state === "next" && "bg-paper shadow-[inset_0_0_0_1px_var(--line)]",
+              ]}
+            >
+              {step.state === "done" && <Icon name="check" class="size-3.5" stroke={2.5} />}
+              {step.state === "current" && <span class="size-2 rounded-full bg-accent" />}
+            </span>
+            <span class="min-w-0 pt-0.5">
+              <span class:list={["block font-medium", step.state === "next" && "text-muted"]}>{step.title}</span>
+              <span class="block text-[0.75rem] text-muted">{step.detail}</span>
+            </span>
+            <span class:list={["pt-0.5 text-[0.75rem] tabular", step.state === "current" ? "font-medium text-accent" : "text-muted"]}>{step.day}</span>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <div class="mock-float top-6 right-0 hidden w-52 p-4 md:block xl:-right-2">
+    <p class="text-[0.75rem] font-medium">The market</p>
+    <ul class="mt-3 grid gap-2.5">
+      {
+        funnel.map((row, i) => (
+          <li>
+            <span class="flex justify-between text-[0.75rem]">
+              <span class="text-muted">{row.label}</span>
+              <span class="font-medium tabular">{row.count}</span>
+            </span>
+            <span class="mt-1 block h-1.5 rounded-full bg-wash">
+              <span class:list={["block h-full rounded-full", i === funnel.length - 1 ? "bg-accent" : "bg-accent-bright"]} style={`width:${Math.max(4, (row.count / top) * 100)}%`} />
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="mock-float right-[6%] -bottom-8 hidden w-64 items-start gap-2.5 p-3 sm:flex">
+    <Image src={consultant.data.photo} alt="" width={64} height={64} class="size-7 shrink-0 rounded-full object-cover object-top" />
+    <span>
+      <span class="block text-[0.75rem] text-muted">{consultant.data.name.split(" ")[0]} · 9:42</span>
+      <span class="mt-0.5 block leading-snug">{message}</span>
+    </span>
+  </div>
+</div>

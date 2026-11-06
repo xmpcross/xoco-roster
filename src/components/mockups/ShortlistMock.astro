@@ -1,0 +1,133 @@
+---
+import { Image } from "astro:assets";
+import Icon from "@/components/ui/Icon.astro";
+import Logomark from "@/components/ui/Logomark.astro";
+import { searchBoard } from "@/config/showcase";
+import { findPerson, getTeam } from "@/lib/content";
+
+const team = await getTeam();
+const consultant = findPerson(team, searchBoard.consultant) ?? team[0];
+const { title, client, location, stages, others, candidates, day, message } = searchBoard;
+const nav = [
+  { icon: "search", label: "Searches", active: true },
+  { icon: "users", label: "Candidates" },
+  { icon: "message-square", label: "Messages", count: 3 },
+  { icon: "chart-line", label: "Reports" },
+];
+---
+
+<div class="mock-stage" aria-hidden="true">
+  <div class="mock grid sm:grid-cols-[10.5rem_minmax(0,1fr)]">
+    <aside class="hidden flex-col gap-5 bg-paper/70 p-3.5 sm:flex">
+      <span class="flex items-center gap-2 px-1.5 font-medium">
+        <Logomark class="size-5 rounded-[0.35rem]" /> Roster
+      </span>
+      <ul class="grid gap-0.5">
+        {
+          nav.map((item) => (
+            <li class:list={["flex items-center gap-2 rounded-md px-2 py-1.5", item.active ? "bg-surface font-medium shadow-[0_0_0_1px_var(--line)]" : "text-muted"]}>
+              <Icon name={item.icon} class="size-3.5" />
+              {item.label}
+              {item.count && <span class="ml-auto rounded-full bg-accent px-1.5 text-[0.6875rem] leading-4 text-white">{item.count}</span>}
+            </li>
+          ))
+        }
+      </ul>
+      <div>
+        <p class="px-2 text-[0.6875rem] text-muted">Active searches</p>
+        <ul class="mt-1.5 grid gap-0.5">
+          <li class="flex items-center gap-2 rounded-md bg-accent-soft px-2 py-1.5 text-accent">
+            <span class="size-1.5 rounded-full bg-accent"></span> CTO, payments
+          </li>
+          {
+            others.map((other) => (
+              <li class="flex items-center gap-2 px-2 py-1.5 text-muted">
+                <span class="size-1.5 rounded-full bg-line" />
+                <span class="truncate">{other}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div class="mt-auto flex items-center gap-2 px-1">
+        <Image src={consultant.data.photo} alt="" width={64} height={64} class="size-6 rounded-full object-cover object-top" />
+        <span class="truncate text-[0.75rem] text-muted">{consultant.data.name}</span>
+      </div>
+    </aside>
+
+    <div class="p-4 sm:p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-[0.75rem] text-muted">Searches / {client}</p>
+          <p class="mt-1 text-[1.0625rem] font-medium tracking-[-0.015em]">{title}</p>
+          <p class="mt-0.5 flex items-center gap-1 text-[0.75rem] text-muted">
+            <Icon name="map-pin" class="size-3" />{location}
+            <span class="mx-1">·</span>
+            <span class="tone-up rounded-full px-1.5 py-px text-[0.6875rem] font-medium">Day {day}</span>
+          </p>
+        </div>
+        <div class="flex shrink-0 gap-1.5">
+          <span class="hidden items-center gap-1 rounded-md px-2 py-1 text-[0.75rem] shadow-[0_0_0_1px_var(--line)] sm:flex"><Icon name="send" class="size-3" /> Share</span>
+          <span class="flex items-center gap-1 rounded-md bg-ink px-2 py-1 text-[0.75rem] text-white"><Icon name="download" class="size-3" /> Export</span>
+        </div>
+      </div>
+
+      <ul class="mt-4 flex gap-1 rounded-lg bg-paper p-1">
+        {
+          stages.map((stage, i) => (
+            <li class:list={["flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[0.75rem]", i === 0 || i === stages.length - 1 ? "flex" : "hidden sm:flex", i === stages.length - 1 ? "bg-surface font-medium shadow-[0_1px_2px_rgb(0_0_0/0.08)]" : "text-muted"]}>
+              {stage.label}
+              <span class:list={["tabular", i === stages.length - 1 ? "text-accent" : "text-ink/60"]}>{stage.count}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <div class="mt-3 grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_4.5rem_6rem] gap-x-3 px-2 py-1.5 text-[0.6875rem] text-muted">
+        <span>Candidate</span><span class="hidden sm:inline">Fit</span><span class="text-right">Status</span>
+      </div>
+      <ul class="grid gap-1">
+        {
+          candidates.map((person, i) => (
+            <li class:list={["grid grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_4.5rem_6rem] items-center gap-x-3 rounded-lg px-2 py-2", i === 0 && "bg-paper"]}>
+              <span class="flex min-w-0 items-center gap-2.5">
+                <Image src={person.photo} alt="" width={72} height={72} class="size-8 shrink-0 rounded-full object-cover object-top" />
+                <span class="min-w-0">
+                  <span class="block truncate font-medium">{person.name}</span>
+                  <span class="block truncate text-[0.75rem] text-muted">{person.role}</span>
+                </span>
+              </span>
+              <span class="hidden gap-0.5 sm:flex">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span class:list={["h-1.5 w-2.5 rounded-full", n <= person.fit ? "bg-accent" : "bg-wash"]} />
+                ))}
+              </span>
+              <span class:list={["justify-self-end rounded-full px-2 py-0.5 text-[0.6875rem] font-medium whitespace-nowrap", `tone-${person.tone}`]}>{person.status}</span>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="mt-3 flex items-center gap-1.5 px-2 text-[0.75rem] text-muted">
+        <Icon name="calendar-check" class="size-3.5 text-accent" />
+        Shortlist presented Thursday, 10:00
+      </p>
+    </div>
+  </div>
+
+  <div class="mock-float -bottom-14 left-[30%] hidden w-64 items-start gap-2.5 p-3 sm:flex">
+    <Image src={consultant.data.photo} alt="" width={64} height={64} class="size-7 shrink-0 rounded-full object-cover object-top" />
+    <span>
+      <span class="block text-[0.75rem] text-muted">{consultant.data.name.split(" ")[0]} · just now</span>
+      <span class="mt-0.5 block leading-snug">{message}</span>
+    </span>
+  </div>
+
+  <Image
+    src={candidates[0].photo}
+    alt=""
+    width={200}
+    height={200}
+    class="absolute -right-4 -bottom-10 z-2 hidden size-24 rounded-full object-cover object-top shadow-[0_0_0_5px_#fff,0_20px_40px_-12px_rgb(23_23_26/0.35)] md:block"
+  />
+</div>

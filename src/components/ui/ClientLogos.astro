@@ -1,0 +1,37 @@
+---
+interface Props {
+  /** File names in `src/assets/logos`, without `.svg`. */
+  names: string[];
+  label?: string;
+  class?: string;
+}
+
+const files = import.meta.glob<string>("/src/assets/logos/*.svg", { query: "?raw", import: "default", eager: true });
+const { names, label, class: className } = Astro.props;
+const logos = names
+  .map((name) => ({ name, svg: files[`/src/assets/logos/${name}.svg`] }))
+  .filter((logo) => logo.svg)
+  .map((logo) => ({ ...logo, svg: logo.svg.replace("<svg ", '<svg aria-hidden="true" ') }));
+const title = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
+---
+
+<div class:list={["client-logos", className]}>
+  {label && <p class="text-[0.9375rem] text-muted">{label}</p>}
+  <ul class="mt-6 flex flex-wrap items-center gap-x-10 gap-y-7">
+    {
+      logos.map((logo) => (
+        <li class="text-muted/70 transition-colors hover:text-ink">
+          <span class="logo" role="img" aria-label={title(logo.name)} set:html={logo.svg} />
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  .logo :global(svg) {
+    display: block;
+    height: 1.4rem;
+    width: auto;
+  }
+</style>

@@ -1,0 +1,82 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import { salaryCities, salaryRoles } from "@/config/salaries";
+import { currencySymbol } from "@/lib/content";
+
+const role = salaryRoles.find((item) => item.id === "cfo") ?? salaryRoles[0];
+const [p25, median, p75] = role.bands.london;
+const yours = Math.round((p25 + (median - p25) * 0.25) / 5) * 5;
+const floor = Math.floor((p25 * 0.8) / 10) * 10;
+const ceil = Math.ceil((p75 * 1.12) / 10) * 10;
+const at = (value: number) => ((value - floor) / (ceil - floor)) * 100;
+const cities = salaryCities.map((city) => ({
+  label: city.label,
+  median: role.bands[city.id][1],
+  symbol: currencySymbol(city.currency),
+}));
+const fields = [
+  { label: "Role", value: role.title },
+  { label: "City", value: "London" },
+  { label: "Your base", value: `£${yours},000` },
+];
+---
+
+<div class="mock-stage" aria-hidden="true">
+  <div class="mock w-[min(100%,34rem)] p-4 sm:p-5">
+    <p class="flex items-center gap-2 font-medium"><Icon name="calculator" class="size-4 text-accent" /> Where does your pay sit?</p>
+    <div class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-[1.5fr_1fr_1fr]">
+      {
+        fields.map((field, i) => (
+          <span class:list={["rounded-lg px-3 py-2 shadow-[0_0_0_1px_var(--line)]", i === 0 && "col-span-2 sm:col-span-1"]}>
+            <span class="block text-[0.6875rem] text-muted">{field.label}</span>
+            <span class="flex items-center justify-between gap-1 truncate font-medium">
+              {field.value}
+              {field.label !== "Your base" && <Icon name="chevron-down" class="size-3 shrink-0 text-muted" />}
+            </span>
+          </span>
+        ))
+      }
+    </div>
+
+    <div class="mt-6 rounded-xl bg-paper p-4 pt-9">
+      <div class="relative h-2.5 rounded-full bg-wash">
+        <span class="absolute inset-y-0 rounded-full bg-accent/85" style={`left:${at(p25)}%;width:${at(p75) - at(p25)}%`}></span>
+        <span class="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-accent bg-surface" style={`left:${at(median)}%`}></span>
+        <span class="absolute bottom-full mb-2.5 -translate-x-1/2 rounded-md bg-ink px-1.5 py-0.5 text-[0.6875rem] font-medium whitespace-nowrap text-white" style={`left:${at(yours)}%`}>
+          You £{yours}k
+          <span class="absolute top-full left-1/2 h-2.5 w-px -translate-x-1/2 bg-ink"></span>
+        </span>
+      </div>
+      <div class="mt-4 grid grid-cols-3 text-[0.75rem]">
+        <span><span class="block text-muted">Lower quartile</span><span class="font-medium tabular">£{p25}k</span></span>
+        <span class="text-center"><span class="block text-muted">Median</span><span class="font-medium tabular">£{median}k</span></span>
+        <span class="text-right"><span class="block text-muted">Upper quartile</span><span class="font-medium tabular">£{p75}k</span></span>
+      </div>
+    </div>
+
+    <p class="mt-4 flex items-center gap-2 text-[0.78rem]">
+      <span class="tone-amber shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-medium whitespace-nowrap">Below median</span>
+      £{median - yours}k under the London median for this role.
+    </p>
+  </div>
+
+  <div class="mock-float -right-2 -bottom-10 hidden w-56 p-4 md:block">
+    <p class="flex items-center justify-between text-[0.75rem]">
+      <span class="font-medium">Median by city</span>
+      <span class="tone-up rounded-full px-1.5 text-[0.6875rem] font-medium">+{role.change}%</span>
+    </p>
+    <ul class="mt-3 grid gap-1.5 text-[0.75rem]">
+      {
+        cities.map((city) => (
+          <li class="flex justify-between">
+            <span class="text-muted">{city.label}</span>
+            <span class="font-medium tabular">
+              {city.symbol}
+              {city.median}k
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</div>

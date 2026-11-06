@@ -1,0 +1,48 @@
+---
+import PersonCard from "@/components/people/PersonCard.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getTeam } from "@/lib/content";
+
+const team = await getTeam();
+const lead = "Partners and principals who run every search themselves. Most spent a decade in the field they now recruit for.";
+---
+
+<BaseLayout title="Consultants" description={lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Consultants" }]} title="Consultants" lead={lead} />
+
+  {
+    siteConfig.offices.map((office, i) => {
+      const people = team.filter((person) => person.data.office === office.city);
+      return (
+        people.length > 0 && (
+          <section class:list={["pb-20 lg:pb-28", i > 0 && "pt-4"]} aria-labelledby={`office-${i}`}>
+            <div class="shell">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <h2 id={`office-${i}`} class="text-display-md">{office.city}</h2>
+                <p class="chip text-muted">
+                  <Icon name="clock" class="size-3.5" />
+                  <span>
+                    {people.length} consultants · <time class="tabular text-ink" data-clock={office.timeZone} />
+                  </span>
+                </p>
+              </div>
+              <div class="mt-8 grid gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+                {people.map((person, j) => (
+                  <div class="reveal" style={`--i:${j % 4}`}>
+                    <PersonCard person={person} eager={i === 0 && j < 4} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )
+      );
+    })
+  }
+
+  <Closing />
+</BaseLayout>

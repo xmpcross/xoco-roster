@@ -1,0 +1,440 @@
+---
+import JobRow from "@/components/jobs/JobRow.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import { employmentTypes, jobAlert, jobsIntro, seniorities, sortRates, workModes } from "@/config/jobs";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getJobs, getSectors, tally, type Job } from "@/lib/content";
+
+const [jobs, sectors] = await Promise.all([getJobs(), getSectors()]);
+const locations = [...new Set(jobs.map((job) => job.data.location))].sort();
+const shortName = (id: string) => sectors.find((sector) => sector.id === id)?.data.short;
+
+const annual = ({ data: { salary } }: Job) => {
+  const rate = sortRates.currency[salary.currency] ?? 1;
+  const per = salary.period === "day" ? sortRates.daysPerYear : salary.period === "hour" ? sortRates.hoursPerYear : 1;
+  return Math.round(salary.max * per * rate);
+};
+
+const groups = [
+  { key: "sector", label: "Sector", options: sectors.map((sector) => ({ value: sector.id, label: sector.data.title })), counts: tally(jobs.map((job) => job.data.sector.id)) },
+  { key: "location", label: "Location", options: locations.map((value) => ({ value, label: value })), counts: tally(jobs.map((job) => job.data.location)) },
+  { key: "mode", label: "Work mode", options: workModes.map((value) => ({ value, label: value })), counts: tally(jobs.map((job) => job.data.workMode)) },
+  { key: "type", label: "Contract", options: employmentTypes.map((value) => ({ value, label: value })), counts: tally(jobs.map((job) => job.data.type)) },
+  { key: "level", label: "Level", options: seniorities.map((value) => ({ value, label: value })), counts: tally(jobs.map((job) => job.data.seniority)) },
+];
+---
+
+<BaseLayout title="Jobs" description={jobsIntro.lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Jobs" }]} title={jobsIntro.title} lead={jobsIntro.lead}>
+    <p slot="aside" class="chip mt-6"><span class="live-dot"></span> {jobs.length} open mandates</p>
+  </PageHero>
+
+  <section class="pb-24 lg:pb-32" aria-label="Job search">
+    <div class="shell">
+      <form class="jobs-bar sticky top-(--sticky-top) follow-header z-20 -mx-2 bg-paper px-2 py-3" role="search" action="/jobs/" method="get" data-jobs-form>
+        <div class="card grid gap-2 p-2 md:grid-cols-[1fr_auto_auto] md:items-center">
+          <div class="flex items-center gap-3 pl-3">
+            <Icon name="search" class="size-5 text-muted" />
+            <label for="jobs-q" class="sr-only">Search roles</label>
+            <input id="jobs-q" name="q" type="search" autocomplete="off" placeholder="Search by title, skill, client or reference" class="h-12 min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none placeholder:text-muted" data-jobs-q />
+          </div>
+          <div class="grid grid-cols-[1fr_auto] gap-2 md:contents">
+            <div class="flex items-center gap-3 rounded-xl bg-paper pl-4">
+              <label for="jobs-sort" class="text-[0.8125rem] text-muted">Sort</label>
+              <select id="jobs-sort" name="sort" class="h-11 min-w-0 flex-1 appearance-none bg-transparent pr-10 text-[0.9375rem] font-medium outline-none" data-jobs-sort>
+                <option value="newest">Newest first</option>
+                <option value="pay">Highest pay</option>
+                <option value="title">A to Z</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm min-h-11 lg:hidden" aria-expanded="false" aria-controls="job-filters" data-filters-toggle>
+              <Icon name="sliders-horizontal" class="size-4" stroke={2} /> Filters <span class="tabular" data-filter-count></span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="mt-5 grid gap-6 lg:grid-cols-12 lg:gap-8">
+        <aside id="job-filters" class="filters lg:col-span-3" aria-label="Filters" data-filters>
+          <div class="filters-scrim absolute inset-0 bg-ink/30 backdrop-blur-[2px] lg:hidden" data-filters-close></div>
+          <div class="filters-sheet relative grid content-start gap-4 lg:sticky lg:top-[calc(var(--sticky-top)+6.5rem)] lg:-m-2 lg:p-2" tabindex="-1" data-filters-sheet>
+            <span class="mx-auto h-1 w-10 rounded-full bg-line lg:hidden" aria-hidden="true"></span>
+            <div class="card p-3">
+              <div class="flex min-h-8 items-center justify-between gap-3 px-2">
+                <p class="font-medium">Filter roles</p>
+                <button type="button" class="ml-auto text-[0.8125rem] font-medium text-accent hover:text-accent-deep" data-clear hidden>Clear all</button>
+                <button type="button" class="-mr-1 grid size-8 place-items-center rounded-full bg-paper lg:hidden" aria-label="Close filters" data-filters-close>
+                  <Icon name="x" class="size-4" stroke={2} />
+                </button>
+              </div>
+              {
+                groups.map((group) => (
+                  <fieldset class="mt-4">
+                    <legend class="sr-only">{group.label}</legend>
+                    <p class="px-2 text-[0.8125rem] text-muted" aria-hidden="true">{group.label}</p>
+                    <ul class="mt-1.5 grid gap-0.5">
+                      {group.options.map((option) => (
+                        <li>
+                          <label class="facet flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-[0.9375rem]">
+                            <input type="checkbox" class="check" name={group.key} value={option.value} data-filter={group.key} />
+                            <span class="flex-1">{option.label}</span>
+                            <span class="facet-count min-w-6 rounded-full bg-paper px-1.5 text-center text-xs leading-5 text-muted tabular" data-facet={`${group.key}:${option.value}`}>{group.counts[option.value] ?? 0}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </fieldset>
+                ))
+              }
+            </div>
+
+            <div class="rounded-card bg-accent-soft p-5">
+              <p class="font-medium">{jobAlert.title}</p>
+              <p class="mt-1.5 text-sm text-muted">{jobAlert.body}</p>
+              <a href={jobAlert.href} class="btn btn-accent btn-sm mt-4">{jobAlert.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+            </div>
+
+            <div class="sticky bottom-0 -mx-4 bg-linear-to-t from-paper from-70% to-transparent px-4 pt-6 pb-4 lg:hidden">
+              <button type="button" class="btn btn-primary w-full" data-filters-close data-filters-show>Show {jobs.length} roles</button>
+            </div>
+          </div>
+        </aside>
+
+        <div class="lg:col-span-9">
+          <div class="flex min-h-8 flex-wrap items-center gap-3 px-1 pb-3">
+            <p class="font-medium" aria-live="polite" data-jobs-summary>{jobs.length} roles</p>
+            <ul class="flex flex-wrap gap-2" data-active-filters></ul>
+          </div>
+          <ul class="grid gap-3" data-jobs-list>
+            {
+              jobs.map((job) => (
+                <li
+                  data-job
+                  data-sector={job.data.sector.id}
+                  data-location={job.data.location}
+                  data-mode={job.data.workMode}
+                  data-type={job.data.type}
+                  data-level={job.data.seniority}
+                  data-posted={job.data.posted.getTime()}
+                  data-pay={annual(job)}
+                  data-title={job.data.title}
+                  data-text={[job.data.title, job.data.client, job.data.summary, job.data.ref, job.data.location, job.data.type, job.data.workMode, job.data.seniority, shortName(job.data.sector.id)].join(" ").toLowerCase()}
+                >
+                  <JobRow job={job} sector={shortName(job.data.sector.id)} headingLevel="h2" />
+                </li>
+              ))
+            }
+          </ul>
+          <div class="card px-6 py-16 text-center" data-jobs-empty hidden>
+            <span class="mx-auto grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+              <Icon name="search" class="size-5" stroke={1.75} />
+            </span>
+            <p class="mt-5 text-title">No roles match those filters.</p>
+            <p class="mt-2 text-muted">Try fewer filters, or register and we will call when one comes in.</p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+              <button type="button" class="btn btn-primary" data-clear>Clear filters</button>
+              <a href={jobAlert.href} class="btn btn-outline">{jobAlert.label}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Closing />
+</BaseLayout>
+
+<style>
+  .jobs-bar select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2367665f' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 1rem;
+  }
+
+  @property --fade-top {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @property --fade-bottom {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  /* Below lg the filters are a bottom sheet over the results. */
+  @media (width < 64rem) {
+    .filters {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: flex-end;
+      visibility: hidden;
+      transition: visibility 0s 0.45s;
+    }
+
+    .filters[data-open] {
+      visibility: visible;
+      transition: none;
+    }
+
+    .filters-scrim {
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .filters[data-open] .filters-scrim {
+      opacity: 1;
+    }
+
+    .filters-sheet {
+      width: 100%;
+      max-height: 88svh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.6rem 1rem 0;
+      border-radius: 1.5rem 1.5rem 0 0;
+      background: var(--paper);
+      box-shadow: 0 -20px 50px -20px rgb(23 23 26 / 0.35);
+      transform: translateY(100%);
+      transition: transform 0.45s var(--ease-out-expo);
+    }
+
+    .filters[data-open] .filters-sheet {
+      transform: none;
+    }
+  }
+
+  /* From lg the sidebar scrolls on its own, without a visible bar. */
+  @media (width >= 64rem) {
+    .filters-sheet {
+      max-height: calc(100svh - var(--sticky-top) - 8rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+      transition:
+        top 0.45s var(--ease-out-expo),
+        max-height 0.45s var(--ease-out-expo);
+      mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+    }
+
+    .filters-sheet::-webkit-scrollbar {
+      display: none;
+    }
+
+    @supports (animation-timeline: scroll()) {
+      .filters-sheet {
+        animation: filters-fade linear both;
+        animation-timeline: scroll(self);
+      }
+    }
+  }
+
+  @keyframes filters-fade {
+    from {
+      --fade-top: 0px;
+      --fade-bottom: 2.5rem;
+    }
+
+    8% {
+      --fade-top: 2.5rem;
+    }
+
+    92% {
+      --fade-bottom: 2.5rem;
+    }
+
+    to {
+      --fade-top: 2.5rem;
+      --fade-bottom: 0px;
+    }
+  }
+
+  .facet {
+    transition: background-color 0.15s;
+  }
+
+  .facet:hover {
+    background: var(--paper);
+  }
+
+  .facet:has(input:checked) {
+    background: var(--accent-soft);
+  }
+
+  .facet:has(input:checked) .facet-count {
+    background: var(--surface);
+    color: var(--accent);
+  }
+
+  :global([data-active-filters] button) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 1.875rem;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+
+  :global([data-active-filters] button:hover) {
+    background: var(--accent);
+    color: #fff;
+  }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>("[data-jobs-form]");
+  const list = document.querySelector<HTMLUListElement>("[data-jobs-list]");
+  const items = [...document.querySelectorAll<HTMLLIElement>("[data-job]")];
+  const query = document.querySelector<HTMLInputElement>("[data-jobs-q]");
+  const sort = document.querySelector<HTMLSelectElement>("[data-jobs-sort]");
+  const boxes = [...document.querySelectorAll<HTMLInputElement>("[data-filter]")];
+  const summary = document.querySelector<HTMLElement>("[data-jobs-summary]");
+  const empty = document.querySelector<HTMLElement>("[data-jobs-empty]");
+  const chips = document.querySelector<HTMLUListElement>("[data-active-filters]");
+  const panel = document.querySelector<HTMLElement>("[data-filters]");
+  const toggle = document.querySelector<HTMLButtonElement>("[data-filters-toggle]");
+  const count = document.querySelector<HTMLElement>("[data-filter-count]");
+  const show = document.querySelector<HTMLElement>("[data-filters-show]");
+  const clears = [...document.querySelectorAll<HTMLButtonElement>("[data-clear]")];
+  const keys = ["sector", "location", "mode", "type", "level"] as const;
+
+  const selected = () =>
+    Object.fromEntries(keys.map((key) => [key, boxes.filter((box) => box.dataset.filter === key && box.checked).map((box) => box.value)])) as Record<
+      (typeof keys)[number],
+      string[]
+    >;
+
+  const words = () =>
+    (query?.value ?? "")
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+
+  const matches = (item: HTMLElement, chosen: ReturnType<typeof selected>, skip?: string) =>
+    words().every((word) => item.dataset.text?.includes(word)) &&
+    keys.every((key) => key === skip || !chosen[key].length || chosen[key].includes(item.dataset[key] ?? ""));
+
+  const render = () => {
+    if (!list) return;
+    const chosen = selected();
+    const visible = items.filter((item) => matches(item, chosen));
+    items.forEach((item) => (item.hidden = !visible.includes(item)));
+
+    const order = sort?.value ?? "newest";
+    [...items]
+      .sort((a, b) =>
+        order === "pay"
+          ? Number(b.dataset.pay) - Number(a.dataset.pay)
+          : order === "title"
+            ? (a.dataset.title ?? "").localeCompare(b.dataset.title ?? "")
+            : Number(b.dataset.posted) - Number(a.dataset.posted),
+      )
+      .forEach((item) => list.append(item));
+
+    /* Each facet counts what you would get by ticking it, given everything else. */
+    boxes.forEach((box) => {
+      const key = box.dataset.filter ?? "";
+      const facet = document.querySelector(`[data-facet="${key}:${CSS.escape(box.value)}"]`);
+      if (facet) facet.textContent = String(items.filter((item) => matches(item, chosen, key) && item.dataset[key] === box.value).length);
+    });
+
+    const total = boxes.filter((box) => box.checked).length;
+    if (summary) summary.textContent = `${visible.length} ${visible.length === 1 ? "role" : "roles"}${total || words().length ? ` of ${items.length}` : ""}`;
+    if (empty) empty.hidden = visible.length > 0;
+    if (count) count.textContent = total ? `(${total})` : "";
+    if (show) show.textContent = `Show ${visible.length} ${visible.length === 1 ? "role" : "roles"}`;
+    clears.forEach((button) => (button.hidden = !total && !words().length && button.closest("[data-jobs-empty]") === null));
+
+    if (chips) {
+      chips.replaceChildren(
+        ...boxes
+          .filter((box) => box.checked)
+          .map((box) => {
+            const li = document.createElement("li");
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = box.closest("label")?.querySelector("span")?.textContent ?? box.value;
+            button.setAttribute("aria-label", `Remove filter: ${button.textContent}`);
+            button.insertAdjacentHTML("beforeend", ' <span aria-hidden="true">×</span>');
+            button.addEventListener("click", () => {
+              box.checked = false;
+              update();
+            });
+            li.append(button);
+            return li;
+          }),
+      );
+    }
+  };
+
+  const syncUrl = () => {
+    const url = new URL(window.location.href);
+    url.search = "";
+    if (query?.value.trim()) url.searchParams.set("q", query.value.trim());
+    if (sort && sort.value !== "newest") url.searchParams.set("sort", sort.value);
+    boxes.filter((box) => box.checked).forEach((box) => url.searchParams.append(box.dataset.filter ?? "", box.value));
+    history.replaceState(null, "", url);
+  };
+
+  const update = () => {
+    render();
+    syncUrl();
+  };
+
+  /* Read the URL: links like /jobs/?sector=technology and the hero search land here. */
+  const params = new URLSearchParams(window.location.search);
+  if (query) query.value = params.get("q") ?? "";
+  if (sort && params.get("sort")) sort.value = params.get("sort") ?? "newest";
+  boxes.forEach((box) => {
+    const values = params.getAll(box.dataset.filter ?? "").map((value) => value.toLowerCase());
+    box.checked = values.includes(box.value.toLowerCase());
+  });
+
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    update();
+  });
+  query?.addEventListener("input", update);
+  sort?.addEventListener("change", update);
+  boxes.forEach((box) => box.addEventListener("change", update));
+  clears.forEach((button) =>
+    button.addEventListener("click", () => {
+      boxes.forEach((box) => (box.checked = false));
+      if (query) query.value = "";
+      update();
+    }),
+  );
+
+  const sheet = document.querySelector<HTMLElement>("[data-filters-sheet]");
+  const setFilters = (open: boolean) => {
+    panel?.toggleAttribute("data-open", open);
+    toggle?.setAttribute("aria-expanded", String(open));
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (open) sheet?.focus({ preventScroll: true });
+    else toggle?.focus({ preventScroll: true });
+  };
+
+  toggle?.addEventListener("click", () => setFilters(!panel?.hasAttribute("data-open")));
+  document.querySelectorAll("[data-filters-close]").forEach((el) => el.addEventListener("click", () => setFilters(false)));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && panel?.hasAttribute("data-open")) setFilters(false);
+  });
+  window.matchMedia("(min-width: 64rem)").addEventListener("change", (event) => {
+    if (event.matches && panel?.hasAttribute("data-open")) setFilters(false);
+  });
+
+  render();
+</script>

@@ -1,0 +1,30 @@
+---
+import PostCard from "@/components/insights/PostCard.astro";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { insightsSection } from "@/config/home";
+import { getPosts } from "@/lib/posts";
+
+const posts = (await getPosts()).slice(0, 3);
+---
+
+{
+  posts.length > 0 && (
+    <section class="section" aria-labelledby="insights-title">
+      <div class="shell">
+        <SectionHead title={insightsSection.title} id="insights-title">
+          <a href="/insights/" class="btn btn-outline">
+            All insights <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+          </a>
+        </SectionHead>
+        <div class="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post, i) => (
+            <div class="reveal" style={`--i:${i}`}>
+              <PostCard post={post} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

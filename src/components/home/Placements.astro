@@ -1,0 +1,64 @@
+---
+import { Image } from "astro:assets";
+import PlacementCard from "@/components/placements/PlacementCard.astro";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { placementsSection } from "@/config/home";
+import { findPerson, getPlacements, getSectors, getTeam, placementHref } from "@/lib/content";
+
+const [placements, sectors, team] = await Promise.all([getPlacements(), getSectors(), getTeam()]);
+const featured = placements.filter((item) => item.data.featured);
+const shown = (featured.length >= 3 ? featured : placements).slice(0, 3);
+const quoted = shown.find((item) => item.data.quote) ?? placements.find((item) => item.data.quote);
+const lead = quoted && findPerson(team, quoted.data.consultant.id);
+const shortName = (id: string) => sectors.find((sector) => sector.id === id)?.data.short;
+---
+
+<section class="section" aria-labelledby="placements-title">
+  <div class="shell">
+    <SectionHead title={placementsSection.title} lead={placementsSection.lead} id="placements-title">
+      <a href="/placements/" class="btn btn-outline">All case studies <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+    </SectionHead>
+
+    <div class="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {
+        quoted?.data.quote && (
+          <figure class="reveal card flex flex-col p-7 sm:p-8 md:col-span-2 lg:col-span-1 lg:row-span-2">
+            <Icon name="quote" class="size-8 text-accent-bright" stroke={1.5} />
+            <blockquote class="mt-6 text-[clamp(1.35rem,1.15rem+0.6vw,1.65rem)] leading-[1.35] tracking-[-0.015em]">“{quoted.data.quote.text}”</blockquote>
+            <figcaption class="mt-auto pt-10">
+              <p class="font-medium">{quoted.data.quote.name}</p>
+              <p class="text-sm text-muted">{quoted.data.quote.role}</p>
+              {lead && (
+                <a href={placementHref(quoted)} class="group mt-6 flex items-center gap-3 rounded-xl bg-paper p-3 text-sm transition-colors hover:bg-accent-soft">
+                  <Image src={lead.data.photo} alt="" width={80} height={80} class="size-9 rounded-full object-cover object-top" />
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-muted">Search led by</span>
+                    <span class="block font-medium">{lead.data.name}</span>
+                  </span>
+                  <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+                </a>
+              )}
+            </figcaption>
+          </figure>
+        )
+      }
+      {
+        shown.map((placement, i) => (
+          <div class="reveal" style={`--i:${i}`}>
+            <PlacementCard placement={placement} sector={shortName(placement.data.sector.id)} />
+          </div>
+        ))
+      }
+      <a href="/placements/" class="reveal group flex min-h-48 flex-col justify-between rounded-card bg-accent-soft p-7 text-accent transition-colors hover:bg-accent hover:text-white">
+        <Icon name="award" class="size-7" />
+        <span>
+          <span class="block text-title">{placements.length} case studies</span>
+          <span class="mt-1 inline-flex items-center gap-2 text-sm font-medium">
+            See every search <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+          </span>
+        </span>
+      </a>
+    </div>
+  </div>
+</section>

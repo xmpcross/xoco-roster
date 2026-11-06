@@ -1,0 +1,88 @@
+---
+import ShortlistMock from "@/components/mockups/ShortlistMock.astro";
+import Aurora from "@/components/ui/Aurora.astro";
+import ClientLogos from "@/components/ui/ClientLogos.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { hero } from "@/config/home";
+import { siteConfig } from "@/config/site";
+import { getJobs } from "@/lib/content";
+
+const jobs = await getJobs();
+const locations = [...new Set(jobs.map((job) => job.data.location))].sort();
+const [before, after] = hero.headline.split(hero.highlight);
+const { employer, book } = siteConfig.actions;
+---
+
+<section class="hero relative isolate overflow-hidden pt-12 pb-20 sm:pt-20" aria-labelledby="hero-title">
+  <div class="shell">
+    <div class="grid items-center gap-x-12 gap-y-20 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <h1 id="hero-title" class="rise text-display-xl" style="--i:1">
+          {before}{after !== undefined ? <span class="text-accent">{hero.highlight}</span> : null}{after}
+        </h1>
+
+        <p class="rise mt-6 max-w-md text-lead text-muted" style="--i:2">{hero.lead}</p>
+
+        <div class="rise mt-9 flex flex-wrap gap-3" style="--i:3">
+          <a href={employer.href} class="btn btn-primary btn-lg">
+            {employer.label}
+            <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+          </a>
+          <a href={book.href} class="btn btn-outline btn-lg">{book.label}</a>
+        </div>
+
+        <ul class="rise mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted" style="--i:4">
+          {
+            hero.ticks.map((tick) => (
+              <li class="flex items-center gap-1.5">
+                <Icon name="circle-check" class="size-4" />
+                {tick}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="rise pt-4 pb-14 lg:col-span-7" style="--i:3">
+        <ShortlistMock />
+      </div>
+    </div>
+
+    <div class="relative mt-16 lg:mt-20">
+      <Aurora variant="band" />
+
+    <form action="/jobs/" method="get" role="search" class="rise card grid gap-2 p-2 sm:grid-cols-[minmax(0,1fr)_auto]" style="--i:5">
+      <div class="flex items-center gap-3 px-3">
+        <Icon name="search" class="size-5 text-muted" />
+        <label for="hero-q" class="sr-only">Search roles</label>
+        <input id="hero-q" name="q" type="search" placeholder={`Search ${jobs.length} live roles: ${hero.searchPlaceholder.toLowerCase()}`} class="h-12 min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none placeholder:text-muted" />
+      </div>
+      <div class="flex gap-2">
+        <label for="hero-location" class="sr-only">Location</label>
+        <select id="hero-location" name="location" class="field h-12 min-h-0 min-w-0 flex-1 bg-paper py-0 shadow-none sm:w-44 sm:flex-none">
+          <option value="">Anywhere</option>
+          {locations.map((location) => <option>{location}</option>)}
+        </select>
+        <button type="submit" class="btn btn-accent h-12 min-h-0">
+          Find roles
+          <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+        </button>
+      </div>
+    </form>
+
+    <p class="rise mt-4 flex flex-wrap items-center gap-2 px-1" style="--i:6">
+      <span class="mr-1 text-sm font-medium text-white">Popular:</span>
+      {
+        hero.popular.map((term) => (
+          <a href={`/jobs/?q=${encodeURIComponent(term)}`} class="chip transition-colors hover:bg-ink hover:text-white hover:shadow-none">
+            {term}
+          </a>
+        ))
+      }
+    </p>
+    </div>
+
+    <ClientLogos names={hero.clients} label={hero.clientsLabel} class="rise mt-20 flex flex-col items-center text-center [&_ul]:justify-center" />
+  </div>
+</section>
+

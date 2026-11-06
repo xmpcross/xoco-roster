@@ -1,0 +1,104 @@
+---
+import { Image } from "astro:assets";
+import Icon from "@/components/ui/Icon.astro";
+import { candidateProfile } from "@/config/showcase";
+
+const { name, photo, location, experience, case: notes, criteria, references, roles, package: pay } = candidateProfile;
+const actions = [
+  { icon: "message-square", label: "Note" },
+  { icon: "calendar", label: "Schedule" },
+  { icon: "star", label: "Shortlist", class: "text-accent" },
+  { icon: "x", label: "Decline", class: "text-down" },
+];
+---
+
+<div class="mock-stage" aria-hidden="true">
+  <p class="mb-3 flex items-center justify-between px-1 text-[0.75rem] text-muted">
+    <span>4 on the shortlist</span>
+    <span class="flex gap-4"><span>Compare</span><span>Export</span></span>
+  </p>
+  <div class="mock p-4 sm:p-5">
+    <div class="flex items-start gap-3">
+      <Image src={photo} alt="" width={96} height={96} class="size-11 rounded-lg object-cover object-top" />
+      <div class="min-w-0 flex-1">
+        <p class="font-medium">{name}</p>
+        <p class="text-[0.75rem] text-muted">{location} · {experience}</p>
+        <p class="mt-1 flex gap-1.5 text-muted">
+          <Icon name="social-linkedin" class="size-3" />
+          <Icon name="mail" class="size-3" />
+          <Icon name="phone" class="size-3" />
+        </p>
+      </div>
+      <ul class="flex gap-3 sm:gap-4">
+        {
+          actions.map((action) => (
+            <li class:list={["flex flex-col items-center gap-1 text-[0.6875rem]", action.class ?? "text-muted"]}>
+              <Icon name={action.icon} class="size-4" />
+              <span class="hidden sm:inline">{action.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <dl class="mt-5 grid gap-x-3 gap-y-1.5 text-[0.78rem] sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:gap-y-4 [&>dd]:mb-3 sm:[&>dd]:mb-0">
+      <dt class="text-muted">Partner's case</dt>
+      <dd class="grid gap-1">
+        {
+          notes.map((note) => (
+            <span class="flex gap-1.5">
+              <Icon name="check" class="mt-0.5 size-3 shrink-0 text-up" stroke={2.5} />
+              {note}
+            </span>
+          ))
+        }
+        <span class="flex items-center gap-1.5 text-accent"><Icon name="plus" class="size-3" stroke={2.5} />Add to case</span>
+      </dd>
+
+      <dt class="text-muted">Criteria</dt>
+      <dd class="grid gap-1">
+        {
+          criteria.map((item) => (
+            <span class="flex gap-1.5">
+              <Icon name="check" class="mt-0.5 size-3 shrink-0 text-up" stroke={2.5} />
+              <span>
+                <span class="font-medium">{item.label}</span> <span class="text-muted">· {item.detail}</span>
+              </span>
+            </span>
+          ))
+        }
+      </dd>
+
+      <dt class="text-muted">References</dt>
+      <dd class="flex items-center gap-2">
+        <span class="tone-up rounded-full px-2 py-0.5 text-[0.6875rem] font-medium">{references}</span>
+      </dd>
+
+      <dt class="text-muted">Experience</dt>
+      <dd class="grid gap-1.5">
+        {
+          roles.map((role) => (
+            <span class="flex items-center gap-2">
+              <span class:list={["grid size-4 place-items-center rounded text-[0.625rem] font-semibold", `tone-${role.tone}`]}>{role.initial}</span>
+              <span>
+                <span class="font-medium">{role.title}</span> at <span class="underline decoration-line underline-offset-2">{role.company}</span>
+                <span class="text-muted"> · {role.dates}</span>
+              </span>
+            </span>
+          ))
+        }
+      </dd>
+
+      <dt class="text-muted">Package</dt>
+      <dd class="flex flex-wrap gap-1.5">
+        {
+          pay.map((item) => (
+            <span class="rounded-md bg-paper px-2 py-1">
+              <span class="text-muted">{item.label}</span> <span class="font-medium tabular">{item.value}</span>
+            </span>
+          ))
+        }
+      </dd>
+    </dl>
+  </div>
+</div>

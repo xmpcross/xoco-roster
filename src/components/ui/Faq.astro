@@ -1,0 +1,57 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+
+interface Props {
+  title: string;
+  items: { question: string; answer: string }[];
+}
+
+const { title, items } = Astro.props;
+---
+
+<section class="section" aria-labelledby="faq-title">
+  <div class="shell grid gap-10 lg:grid-cols-12">
+    <SectionHead title={title} id="faq-title" class="lg:col-span-4 lg:self-start" />
+    <div class="grid gap-2.5 lg:col-span-8">
+      {
+        items.map((item, i) => (
+          <details class="faq card reveal" name="faq" open={i === 0}>
+            <summary class="flex cursor-pointer items-start gap-6 px-6 py-5 text-lg font-medium tracking-[-0.015em]">
+              <span class="flex-1">{item.question}</span>
+              <span class="faq-icon mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-wash">
+                <Icon name="plus" class="size-4" stroke={2} />
+              </span>
+            </summary>
+            <p class="max-w-2xl px-6 pb-6 text-muted">{item.answer}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq summary {
+    list-style: none;
+  }
+
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-icon {
+    transition:
+      transform 0.35s var(--ease-out-expo),
+      background-color 0.2s;
+  }
+
+  .faq[open] .faq-icon {
+    transform: rotate(45deg);
+  }
+
+  .faq summary:hover .faq-icon {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+</style>

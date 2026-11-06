@@ -1,0 +1,46 @@
+---
+import JobRow from "@/components/jobs/JobRow.astro";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { rolesSection } from "@/config/home";
+import { getJobs, getSectors, tally } from "@/lib/content";
+
+const [jobs, sectors] = await Promise.all([getJobs(), getSectors()]);
+const featured = jobs.filter((job) => job.data.featured).slice(0, 5);
+const shown = featured.length ? featured : jobs.slice(0, 5);
+const counts = tally(jobs.map((job) => job.data.sector.id));
+const shortName = (id: string) => sectors.find((sector) => sector.id === id)?.data.short;
+---
+
+<section class="section" aria-labelledby="roles-title">
+  <div class="shell">
+    <SectionHead title={rolesSection.title} lead={rolesSection.lead} id="roles-title">
+      <a href="/jobs/" class="btn btn-primary">All {jobs.length} roles <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+    </SectionHead>
+
+    <nav class="reveal mt-10" aria-label="Roles by sector">
+      <ul class="flex flex-wrap gap-2">
+        {
+          sectors.map((sector) => (
+            <li>
+              <a href={`/jobs/?sector=${sector.id}`} class="chip min-h-9 px-3.5 text-sm transition-colors hover:bg-ink hover:text-white hover:shadow-none">
+                {sector.data.short}
+                <span class="text-muted tabular">{counts[sector.id] ?? 0}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="mt-6 grid gap-3">
+      {
+        shown.map((job, i) => (
+          <div class="reveal" style={`--i:${i}`}>
+            <JobRow job={job} sector={shortName(job.data.sector.id)} />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

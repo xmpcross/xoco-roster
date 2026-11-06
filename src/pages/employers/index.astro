@@ -1,0 +1,80 @@
+---
+import Feature from "@/components/home/Feature.astro";
+import Placements from "@/components/home/Placements.astro";
+import SearchMock from "@/components/mockups/SearchMock.astro";
+import ClientLogos from "@/components/ui/ClientLogos.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Faq from "@/components/ui/Faq.astro";
+import Figures from "@/components/ui/Figures.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { employers } from "@/config/employers";
+import { features } from "@/config/home";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const { employer, book } = siteConfig.actions;
+---
+
+<BaseLayout title="For employers" description={employers.lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Employers" }]} title={employers.title} lead={employers.lead}>
+    <div slot="aside" class="mt-6 flex flex-wrap gap-3">
+      <a href={employer.href} class="btn btn-accent">{employer.label} <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+      <a href={book.href} class="btn btn-outline">{book.label}</a>
+    </div>
+  </PageHero>
+
+  <section class="pb-20 lg:pb-28" aria-label="Clients">
+    <div class="shell">
+      <ClientLogos names={employers.clients} label={employers.clientsLabel} />
+    </div>
+  </section>
+
+  <section id="services" class="section" aria-labelledby="services-title">
+    <div class="shell">
+      <SectionHead title="Four ways to hire with us" lead="Pick the model that fits the role. Many clients use all four over the life of a business." id="services-title" />
+      <div class="mt-12 grid gap-4 md:grid-cols-2">
+        {
+          employers.services.map((service) => (
+            <article class="reveal card flex flex-col p-6 sm:p-8">
+              <div class="flex items-center justify-between">
+                <span class="grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+                  <Icon name={service.icon} class="size-5" stroke={1.75} />
+                </span>
+              </div>
+              <h3 class="mt-8 text-display-md">{service.title}</h3>
+              <p class="mt-4 max-w-md text-muted">{service.body}</p>
+              <ul class="mt-6 mb-10 grid gap-2">
+                {service.points.map((point) => (
+                  <li class="flex items-center gap-3 text-[0.9375rem]">
+                    <Icon name="check" class="size-4 text-accent" stroke={2.25} />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+              <dl class="mt-auto grid grid-cols-2 gap-3 text-sm text-muted">
+                <div class="rounded-xl bg-paper p-3.5">
+                  <dt>Timeline</dt>
+                  <dd class="mt-0.5 font-medium text-ink">{service.timeline}</dd>
+                </div>
+                <div class="rounded-xl bg-paper p-3.5">
+                  <dt>Fee</dt>
+                  <dd class="mt-0.5 font-medium text-ink">{service.fee}</dd>
+                </div>
+              </dl>
+            </article>
+          ))
+        }
+      </div>
+      <Figures items={employers.promises} class="mt-20" />
+    </div>
+  </section>
+
+  <Feature id="process-title" flip {...features.process}>
+    <SearchMock />
+  </Feature>
+  <Placements />
+  <Faq title="Before you brief us" items={employers.faq} />
+  <Closing />
+</BaseLayout>

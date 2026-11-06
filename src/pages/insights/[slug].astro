@@ -1,0 +1,276 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { Image } from "astro:assets";
+import { render } from "astro:content";
+import PostCard from "@/components/insights/PostCard.astro";
+import PostCta from "@/components/insights/PostCta.astro";
+import ShareSheet from "@/components/insights/ShareSheet.astro";
+import ConsultantPanel from "@/components/people/ConsultantPanel.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { personHref } from "@/lib/content";
+import { formatDate, getPosts, postAuthor, postHref, relatedPosts, topicHref } from "@/lib/posts";
+import { articleSchema } from "@/lib/schema";
+
+export const getStaticPaths = (async () => {
+  const posts = await getPosts();
+  return posts.map((post, index) => ({
+    params: { slug: post.id },
+    props: { post, newer: posts[index - 1], older: posts[index + 1], related: relatedPosts(post, posts) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { post, newer, older, related } = Astro.props;
+const { Content, headings } = await render(post);
+const { title, description, cover, coverAlt, coverCredit, topic, date, updated, tags, cta } = post.data;
+const author = await postAuthor(post);
+const toc = headings.filter((heading) => heading.depth === 2);
+const url = new URL(postHref(post), siteConfig.siteUrl).toString();
+const words = (post.body ?? "").split(/\s+/).length;
+const minutes = Math.max(1, Math.round(words / 230));
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={cover}
+  imageAlt={coverAlt}
+  type="article"
+  structuredData={articleSchema(post, cover.src, author?.data.name ?? siteConfig.name)}
+>
+  <div class="read-progress fixed inset-x-0 top-(--sticky-top) follow-header z-40 h-[3px] origin-left bg-accent" aria-hidden="true" data-progress></div>
+
+  <article>
+    <header class="pt-10 sm:pt-14">
+      <div class="shell">
+        <nav aria-label="Breadcrumb" class="rise text-[0.875rem] text-muted">
+          <ol class="flex flex-wrap items-center gap-2">
+            <li>
+              <a href="/insights/" class="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
+                <Icon name="arrow-left" class="size-3.5" stroke={2} /> Insights
+              </a>
+            </li>
+            <li aria-hidden="true">·</li>
+            <li><a href={topicHref(topic)} class="pill transition-colors hover:bg-accent hover:text-white">{topic}</a></li>
+          </ol>
+        </nav>
+        <h1 class="rise mt-6 max-w-5xl text-display-xl" style="--i:1">{title}</h1>
+        <p class="rise mt-6 max-w-3xl text-lead text-muted" style="--i:2">{description}</p>
+        <div class="rise mt-8 flex flex-wrap items-center gap-x-8 gap-y-4" style="--i:3">
+          {
+            author ? (
+              <a href={personHref(author)} class="group flex items-center gap-3">
+                <Image src={author.data.photo} alt="" widths={[96, 144]} sizes="2.75rem" class="size-11 shrink-0 rounded-full object-cover object-top" />
+                <span class="min-w-0 leading-tight">
+                  <span class="block font-medium transition-colors group-hover:text-accent">{author.data.name}</span>
+                  <span class="mt-0.5 block text-[0.8125rem] text-muted">{author.data.role}</span>
+                </span>
+              </a>
+            ) : (
+              <p class="font-medium">{siteConfig.name}</p>
+            )
+          }
+          <dl class="flex gap-8 text-[0.8125rem] text-muted">
+            <div>
+              <dt>Published</dt>
+              <dd class="mt-0.5 font-medium text-ink"><time datetime={date.toISOString()}>{formatDate(date)}</time></dd>
+            </div>
+            <div>
+              <dt>Reading time</dt>
+              <dd class="mt-0.5 font-medium text-ink">{minutes} min</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+      <figure class="rise shell mt-10" style="--i:4">
+        <div class="aspect-video overflow-hidden rounded-card bg-wash lg:aspect-21/9">
+          <Image src={cover} alt={coverAlt} widths={[640, 1024, 1600, 2000]} sizes="(min-width: 1400px) 1344px, 100vw" loading="eager" fetchpriority="high" class="size-full object-cover" />
+        </div>
+        {
+          coverCredit && (
+            <figcaption class="mt-3 text-[0.8125rem] text-muted">
+              Photo: <a href={coverCredit.url} class="hover:text-ink hover:underline">{coverCredit.name}</a>
+            </figcaption>
+          )
+        }
+      </figure>
+    </header>
+
+    <div class="shell grid gap-12 py-14 lg:grid-cols-12 lg:gap-8 lg:py-20">
+      <aside class="lg:col-span-3">
+        <div class="grid gap-10 lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+          {
+            toc.length > 1 && (
+              <nav aria-labelledby="toc-title" class="card hidden p-2 lg:block">
+                <p id="toc-title" class="px-3 pt-2 text-[0.8125rem] text-muted">In this article</p>
+                <ol class="mt-2 grid gap-0.5 text-[0.9375rem] leading-snug">
+                  {toc.map((heading) => (
+                    <li>
+                      <a href={`#${heading.slug}`} class="toc-link" data-toc={heading.slug}>
+                        {heading.text}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )
+          }
+          <button type="button" class="btn btn-outline btn-sm justify-self-start" aria-haspopup="dialog" data-share-open hidden>
+            <Icon name="social-share" class="size-3.5" />
+            <span>Share</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="min-w-0 lg:col-span-7 lg:col-start-5">
+        <div class="prose">
+          <Content />
+        </div>
+
+        {
+          (tags.length > 0 || updated) && (
+            <div class="mt-14 flex flex-wrap items-center gap-2">
+              {tags.map((tag) => (
+                <span class="chip">#{tag}</span>
+              ))}
+              {updated && (
+                <span class="meta ml-auto">
+                  Updated <time datetime={updated.toISOString()}>{formatDate(updated)}</time>
+                </span>
+              )}
+            </div>
+          )
+        }
+
+        {cta !== false && <PostCta {...cta} />}
+        {author && <ConsultantPanel person={author} label="Written by" class="mt-6 max-w-md" />}
+
+        {
+          (newer || older) && (
+            <nav aria-label="More articles" class="mt-12 grid gap-3 sm:grid-cols-2">
+              {older ? (
+                <a href={postHref(older)} class="adjacent card group block p-5">
+                  <span class="flex items-center gap-1.5 text-[0.8125rem] text-muted">
+                    <Icon name="arrow-left" class="size-3.5" stroke={2} /> Previous
+                  </span>
+                  <span class="mt-2 block leading-snug font-medium transition-colors group-hover:text-accent">{older.data.title}</span>
+                </a>
+              ) : (
+                <span class="hidden sm:block" />
+              )}
+              {newer && (
+                <a href={postHref(newer)} class="adjacent card group block p-5 sm:text-right">
+                  <span class="flex items-center gap-1.5 text-[0.8125rem] text-muted sm:justify-end">
+                    Next <Icon name="arrow-right" class="size-3.5" stroke={2} />
+                  </span>
+                  <span class="mt-2 block leading-snug font-medium transition-colors group-hover:text-accent">{newer.data.title}</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </div>
+    </div>
+  </article>
+
+  <ShareSheet title={title} url={url} />
+
+  {
+    related.length > 0 && (
+      <section class="pt-6 pb-24 lg:pb-32" aria-labelledby="related-title">
+        <div class="shell">
+          <h2 id="related-title" class="text-display-md">Keep reading</h2>
+          <div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((item) => (
+              <PostCard post={item} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .toc-link {
+    display: block;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.65rem;
+    color: var(--muted);
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+
+  .toc-link:hover {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .toc-link[aria-current] {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .adjacent {
+    transition:
+      box-shadow 0.25s,
+      transform 0.25s var(--ease-out-expo);
+  }
+
+  .adjacent:hover {
+    box-shadow: var(--shadow-float);
+    transform: translateY(-2px);
+  }
+
+  .read-progress {
+    transform: scaleX(0);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .read-progress {
+      animation: progress linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+
+  @keyframes progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+</style>
+
+<script>
+  const progress = document.querySelector<HTMLElement>("[data-progress]");
+  if (progress && !CSS.supports("animation-timeline: scroll()")) {
+    const update = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.transform = `scaleX(${max > 0 ? window.scrollY / max : 0})`;
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+  }
+
+  const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-toc]")];
+  const targets = links
+    .map((link) => document.getElementById(link.dataset.toc ?? ""))
+    .filter((el): el is HTMLElement => el !== null);
+  if (targets.length) {
+    const setActive = () => {
+      const offset = window.innerHeight * 0.3;
+      let current = targets[0];
+      for (const target of targets) {
+        if (target.getBoundingClientRect().top - offset <= 0) current = target;
+      }
+      links.forEach((link) =>
+        link.dataset.toc === current.id ? link.setAttribute("aria-current", "location") : link.removeAttribute("aria-current"),
+      );
+    };
+    setActive();
+    window.addEventListener("scroll", setActive, { passive: true });
+  }
+</script>

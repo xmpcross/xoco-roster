@@ -1,0 +1,192 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { Image } from "astro:assets";
+import { render } from "astro:content";
+import PostCard from "@/components/insights/PostCard.astro";
+import JobRow from "@/components/jobs/JobRow.astro";
+import PlacementCard from "@/components/placements/PlacementCard.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getJobs, getPlacements, getSectors, getTeam, sectorHref } from "@/lib/content";
+import { getPosts } from "@/lib/posts";
+
+export const getStaticPaths = (async () => {
+  const team = await getTeam();
+  return team.map((person) => ({ params: { slug: person.id }, props: { person } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { person } = Astro.props;
+const { Content } = await render(person);
+const [jobs, placements, posts, sectors] = await Promise.all([getJobs(), getPlacements(), getPosts(), getSectors()]);
+const roles = jobs.filter((job) => job.data.consultant.id === person.id);
+const cases = placements.filter((item) => item.data.consultant.id === person.id);
+const writing = posts.filter((post) => post.data.author.id === person.id).slice(0, 3);
+const mine = sectors.filter((sector) => person.data.sectors.some((ref) => ref.id === sector.id));
+const shortName = (id: string) => sectors.find((sector) => sector.id === id)?.data.short;
+const { name, role, office, focus, photo, photoAlt, photoCredit, email, phone, linkedin, booking, joined, placements: placed } = person.data;
+const firstName = name.split(" ")[0];
+---
+
+<BaseLayout title={name} description={`${name}, ${role} at ${siteConfig.name}. ${focus}.`} image={photo} imageAlt={photoAlt}>
+  <section class="pt-10 pb-16 sm:pt-14 lg:pb-24">
+    <div class="shell">
+      <nav aria-label="Breadcrumb" class="rise text-[0.8125rem] text-muted">
+        <ol class="flex flex-wrap items-center gap-1.5">
+          <li><a href="/team/" class="hover:text-ink">Consultants</a></li>
+          <li class="flex" aria-hidden="true"><Icon name="chevron-right" class="size-3.5 opacity-60" /></li>
+          <li aria-current="page" class="font-medium text-ink">{name}</li>
+        </ol>
+      </nav>
+
+      <div class="mt-6 grid gap-10 lg:grid-cols-12">
+        <figure class="rise lg:col-span-5" style="--i:1">
+          <div class="aspect-4/5 overflow-hidden rounded-card bg-wash lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+            <Image src={photo} alt={photoAlt} widths={[480, 720, 960]} sizes="(min-width: 1024px) 34rem, 100vw" loading="eager" fetchpriority="high" class="size-full object-cover object-top" />
+          </div>
+          {
+            photoCredit && (
+              <figcaption class="mt-3 text-[0.8125rem] text-muted">
+                Photo: <a href={photoCredit.url} class="hover:text-ink hover:underline">{photoCredit.name}</a>
+              </figcaption>
+            )
+          }
+        </figure>
+
+        <div class="lg:col-span-6 lg:col-start-7">
+          <h1 class="rise text-display-xl" style="--i:2">{name}</h1>
+          <p class="rise mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-lg text-ink-soft" style="--i:2">
+            {role}
+            <span class="pill tone-neutral"><Icon name="map-pin" class="size-3.5" />{office}</span>
+          </p>
+          <p class="rise mt-5 text-lead text-muted" style="--i:3">{focus}.</p>
+
+          <div class="rise mt-8 flex flex-wrap gap-3" style="--i:3">
+            <a href={booking ?? siteConfig.actions.book.href} class="btn btn-accent">
+              <Icon name="calendar" class="size-4" stroke={2} /> Book a call with {firstName}
+            </a>
+            <a href={`mailto:${email}`} class="btn btn-outline">
+              <Icon name="mail" class="size-4" stroke={2} /> Email
+            </a>
+          </div>
+
+          <dl class="rise mt-10 grid grid-cols-3 gap-3" style="--i:4">
+            <div class="card p-4 sm:p-5">
+              <dt class="text-[0.8125rem] text-muted">Placements</dt>
+              <dd class="mt-1.5 text-display-md tabular">{placed}</dd>
+            </div>
+            <div class="card p-4 sm:p-5">
+              <dt class="text-[0.8125rem] text-muted">Joined</dt>
+              <dd class="mt-1.5 text-display-md tabular">{joined}</dd>
+            </div>
+            <div class="card p-4 sm:p-5">
+              <dt class="text-[0.8125rem] text-muted">Live roles</dt>
+              <dd class="mt-1.5 text-display-md tabular">{roles.length}</dd>
+            </div>
+          </dl>
+
+          <div class="prose mt-10">
+            <Content />
+          </div>
+
+          <div class="mt-12 grid gap-8">
+            <div>
+              <p class="text-[0.8125rem] text-muted">Practices</p>
+              <ul class="mt-3 flex flex-wrap gap-2">
+                {
+                  mine.map((sector) => (
+                    <li>
+                      <a href={sectorHref(sector.id)} class="chip min-h-10 px-4 text-[0.9375rem] transition-colors hover:text-accent">
+                        {sector.data.title} <Icon name="arrow-up-right" class="size-3.5 text-muted" />
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+            <div>
+              <p class="text-[0.8125rem] text-muted">Direct</p>
+              <ul class="mt-3 flex flex-wrap gap-2">
+                <li>
+                  <a href={`tel:${phone.replace(/\s/g, "")}`} class="chip min-h-10 gap-2 px-4 text-[0.9375rem] transition-colors hover:text-accent">
+                    <Icon name="phone" class="size-4 text-muted" />{phone}
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${email}`} class="chip min-h-10 gap-2 px-4 text-[0.9375rem] transition-colors hover:text-accent">
+                    <Icon name="mail" class="size-4 text-muted" />{email}
+                  </a>
+                </li>
+                {
+                  linkedin && (
+                    <li>
+                      <a href={linkedin} class="chip min-h-10 gap-2 px-4 text-[0.9375rem] transition-colors hover:text-accent">
+                        <Icon name="social-linkedin" class="size-4 text-muted" />LinkedIn
+                      </a>
+                    </li>
+                  )
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {
+    roles.length > 0 && (
+      <section class="section pt-0" aria-labelledby="roles-title">
+        <div class="shell">
+          <h2 id="roles-title" class="text-display-md">
+            Roles {firstName} is running
+          </h2>
+          <div class="mt-8 grid gap-3">
+            {roles.map((job) => (
+              <JobRow job={job} sector={shortName(job.data.sector.id)} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    cases.length > 0 && (
+      <section class="section pt-0" aria-labelledby="cases-title">
+        <div class="shell">
+          <h2 id="cases-title" class="text-display-md">
+            Searches {firstName} has closed
+          </h2>
+          <div class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {cases.map((placement) => (
+              <PlacementCard placement={placement} sector={shortName(placement.data.sector.id)} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    writing.length > 0 && (
+      <section class="section pt-0" aria-labelledby="writing-title">
+        <div class="shell">
+          <h2 id="writing-title" class="text-display-md">
+            Written by {firstName}
+          </h2>
+          <div class="mt-8 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {writing.map((post) => (
+              <PostCard post={post} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <Closing />
+</BaseLayout>

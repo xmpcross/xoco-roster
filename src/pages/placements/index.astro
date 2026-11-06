@@ -1,0 +1,36 @@
+---
+import PlacementCard from "@/components/placements/PlacementCard.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Figures from "@/components/ui/Figures.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import { figures } from "@/config/home";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getPlacements, getSectors } from "@/lib/content";
+
+const [placements, sectors] = await Promise.all([getPlacements(), getSectors()]);
+const shortName = (id: string) => sectors.find((sector) => sector.id === id)?.data.short;
+const lead = "Searches we can talk about: the brief, how we ran it, and how the appointment looks a year on.";
+---
+
+<BaseLayout title="Placements" description={lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Placements" }]} title="Placements" lead={lead} />
+
+  <section class="pb-24 lg:pb-32" aria-label="Case studies">
+    <div class="shell">
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {
+          placements.map((placement, i) => (
+            <div class="reveal" style={`--i:${i % 3}`}>
+              <PlacementCard placement={placement} sector={shortName(placement.data.sector.id)} headingLevel="h2" />
+            </div>
+          ))
+        }
+      </div>
+      <div class="card mt-20 p-8 sm:p-10">
+        <Figures items={figures} />
+      </div>
+    </div>
+  </section>
+
+  <Closing />
+</BaseLayout>

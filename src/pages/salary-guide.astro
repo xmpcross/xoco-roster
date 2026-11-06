@@ -1,0 +1,337 @@
+---
+import RangeChart from "@/components/salary/RangeChart.astro";
+import ReportForm from "@/components/salary/ReportForm.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Figures from "@/components/ui/Figures.astro";
+import Icon from "@/components/ui/Icon.astro";
+import Logomark from "@/components/ui/Logomark.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { salaryCities, salaryGuide, salaryRoles } from "@/config/salaries";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getSectors } from "@/lib/content";
+
+const sectors = await getSectors();
+const groups = sectors
+  .map((sector) => ({ sector, roles: salaryRoles.filter((role) => role.sector === sector.id) }))
+  .filter((group) => group.roles.length > 0);
+const data = JSON.stringify({ roles: salaryRoles, cities: salaryCities });
+const title = `${salaryGuide.title} ${salaryGuide.year}`;
+---
+
+<BaseLayout title={title} description={salaryGuide.lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Salary guide" }]} title={title} lead={salaryGuide.lead}>
+    <div slot="aside" class="mt-6 flex flex-wrap gap-3">
+      <a href="#calculator" class="btn btn-accent"><Icon name="calculator" class="size-4" stroke={2} /> Calculator</a>
+      <a href="#report" class="btn btn-outline"><Icon name="download" class="size-4" stroke={2} /> Full report</a>
+    </div>
+  </PageHero>
+
+  <section class="pb-20 lg:pb-28" aria-label="Headline figures">
+    <div class="shell">
+      <div class="card p-8 sm:p-10">
+        <Figures items={salaryGuide.highlights} />
+      </div>
+    </div>
+  </section>
+
+  <section id="calculator" class="scroll-mt-24 pb-20 lg:pb-28" aria-labelledby="calc-title">
+    <div class="shell">
+      <div class="grid gap-4 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <div class="card h-full p-6 sm:p-9">
+            <span class="grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+              <Icon name="calculator" class="size-5" stroke={1.75} />
+            </span>
+            <h2 id="calc-title" class="mt-8 text-display-md">Where does your pay sit?</h2>
+            <p class="mt-3 text-muted">Pick a role and a city. Add your base to see roughly where it falls in the market. Nothing you type leaves your browser.</p>
+
+            <form class="calc mt-8 grid gap-5" data-calc data-salaries={data}>
+              <div>
+                <label for="calc-role" class="field-label">Role</label>
+                <select id="calc-role" name="role" class="field">
+                  {
+                    groups.map((group) => (
+                      <optgroup label={group.sector.data.title}>
+                        {group.roles.map((role) => (
+                          <option value={role.id} selected={role.id === "cfo"}>
+                            {role.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))
+                  }
+                </select>
+              </div>
+              <div>
+                <label for="calc-city" class="field-label">City</label>
+                <select id="calc-city" name="city" class="field">
+                  {salaryCities.map((city) => <option value={city.id}>{city.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label for="calc-mine" class="field-label">Your base salary (optional)</label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted" data-calc-symbol>£</span>
+                  <input id="calc-mine" name="mine" type="number" inputmode="numeric" min="0" step="1000" placeholder="185000" class="field pl-8" />
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7">
+          <div class="card h-full p-6 sm:p-9" aria-live="polite" data-calc-output>
+            <div class="flex flex-wrap items-start justify-between gap-6">
+              <div>
+                <p class="text-[0.8125rem] text-muted" data-calc-title>Chief Financial Officer · London</p>
+                <p class="mt-3 text-[clamp(3rem,2rem+3vw,4.75rem)] leading-none font-medium tracking-[-0.045em] tabular" data-calc-median>£240k</p>
+                <p class="mt-2 text-sm text-muted">Median base</p>
+              </div>
+              <dl class="grid grid-cols-2 gap-2">
+                <div class="rounded-xl bg-paper px-4 py-3">
+                  <dt class="text-[0.8125rem] text-muted">YoY</dt>
+                  <dd class="mt-0.5 font-medium text-up tabular" data-calc-change>+4.2%</dd>
+                </div>
+                <div class="rounded-xl bg-paper px-4 py-3">
+                  <dt class="text-[0.8125rem] text-muted">Bonus</dt>
+                  <dd class="mt-0.5 font-medium tabular" data-calc-bonus>40-80%</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div class="mt-14">
+              <div class="relative h-3 rounded-full bg-wash" aria-hidden="true">
+                <span class="calc-band absolute inset-y-0 rounded-full bg-accent" data-calc-band style="left:20%;width:50%"></span>
+                <span class="calc-median absolute -top-1.5 -bottom-1.5 w-[3px] -translate-x-1/2 rounded-full bg-ink" data-calc-median-tick style="left:42%"></span>
+                <span class="calc-you absolute -top-9 -translate-x-1/2" data-calc-you hidden>
+                  <span class="block rounded-full bg-ink px-2 py-0.5 text-[0.75rem] font-medium whitespace-nowrap text-white">You</span>
+                  <span class="mx-auto block h-11 w-[2px] rounded-full bg-ink"></span>
+                </span>
+              </div>
+              <dl class="mt-4 grid grid-cols-3 text-[0.8125rem] text-muted">
+                <div><dt>Lower quartile</dt><dd class="mt-1 text-base font-medium text-ink tabular" data-calc-p25>£200k</dd></div>
+                <div class="text-center"><dt>Median</dt><dd class="mt-1 text-base font-medium text-ink tabular" data-calc-p50>£240k</dd></div>
+                <div class="text-right"><dt>Upper quartile</dt><dd class="mt-1 text-base font-medium text-ink tabular" data-calc-p75>£300k</dd></div>
+              </dl>
+            </div>
+
+            <p class="mt-8 rounded-xl bg-accent-soft px-5 py-4 text-lead text-ink" data-calc-verdict>Add your base salary to see where it sits.</p>
+
+            <div class="mt-8">
+              <p class="text-[0.8125rem] text-muted">Same role, other cities</p>
+              <ul class="mt-3 grid gap-2 sm:grid-cols-2" data-calc-cities></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="bands" class="section pt-0" aria-labelledby="bands-title">
+    <div class="shell">
+      <SectionHead title="Every role, every city" lead={salaryGuide.method} id="bands-title">
+        <div class="flex flex-wrap gap-1 rounded-full bg-surface p-1 shadow-card" role="radiogroup" aria-label="City" data-city-switch>
+          {
+            salaryCities.map((city, i) => (
+              <label class="city-pill cursor-pointer rounded-full px-3.5 py-2 text-[0.875rem] leading-none font-medium text-muted">
+                <input type="radio" name="bands-city" value={city.id} checked={i === 0} class="sr-only" />
+                {city.label}
+              </label>
+            ))
+          }
+        </div>
+      </SectionHead>
+
+      <div class="mt-12 grid gap-4">
+        {
+          groups.map((group) => (
+            <div class="card grid gap-6 p-5 sm:p-8 lg:grid-cols-12" id={`bands-${group.sector.id}`}>
+              <div class="lg:col-span-3">
+                <span class="grid size-10 place-items-center rounded-xl bg-paper" aria-hidden="true">
+                  <Icon name={group.sector.data.icon} class="size-4.5" />
+                </span>
+                <h3 class="mt-4 text-title">
+                  <a href={`/sectors/${group.sector.id}/`} class="hover:text-accent">
+                    {group.sector.data.title}
+                  </a>
+                </h3>
+              </div>
+              <div class="min-w-0 lg:col-span-9 [&_tbody_tr:last-child]:border-b-0">
+                {salaryCities.map((city, c) => (
+                  <div data-city-panel={city.id} hidden={c > 0}>
+                    <RangeChart
+                      rows={group.roles.map((role) => ({ title: role.title, band: role.bands[city.id], change: role.change, bonus: role.bonus }))}
+                      currency={city.currency}
+                      bonus
+                      caption={`${group.sector.data.title} base salary bands in ${city.label}, in thousands`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <p class="meta mt-8">Year-on-year change is for the London median. Bonus is a typical range as a share of base.</p>
+    </div>
+  </section>
+
+  <section id="report" class="scroll-mt-24 pb-24 lg:pb-32" aria-labelledby="report-title">
+    <div class="shell">
+      <div class="card grid gap-2 p-2 lg:grid-cols-2">
+        <div class="relative flex min-h-[24rem] flex-col overflow-hidden rounded-[0.8rem] bg-accent-soft p-8 text-accent sm:p-10" aria-hidden="true">
+          <div class="flex items-center justify-between">
+            <Logomark class="size-10 rounded-xl" />
+            <span class="text-[0.8125rem] font-medium">{siteConfig.name} · {salaryGuide.year}</span>
+          </div>
+          <p class="mt-auto text-[clamp(2.75rem,2rem+3vw,4.75rem)] leading-[0.95] font-medium tracking-[-0.045em]">Salary<br />Guide<br />{salaryGuide.year}</p>
+          <div class="mt-8 flex items-end gap-1.5">
+            {[30, 46, 38, 60, 52, 74, 66, 90, 82, 100].map((h) => <span class="w-full rounded-t-md bg-accent/20" style={`height:${h * 0.7}px`} />)}
+          </div>
+        </div>
+        <div class="p-6 sm:p-10">
+          <h2 id="report-title" class="text-display-md">{siteConfig.report.title}</h2>
+          <p class="mt-4 mb-8 text-muted">{siteConfig.report.description}</p>
+          <ReportForm id="guide-report" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Closing />
+</BaseLayout>
+
+<style>
+  .city-pill {
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .city-pill:hover {
+    color: var(--ink);
+  }
+
+  .city-pill:has(input:checked) {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .city-pill:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .calc-band,
+  .calc-median,
+  .calc-you {
+    transition:
+      left 0.6s var(--ease-out-expo),
+      width 0.6s var(--ease-out-expo);
+  }
+</style>
+
+<script>
+  import type { SalaryRole } from "@/config/salaries";
+
+  interface City {
+    id: string;
+    label: string;
+    currency: string;
+  }
+
+  const form = document.querySelector<HTMLFormElement>("[data-calc]");
+  const out = document.querySelector<HTMLElement>("[data-calc-output]");
+
+  if (form && out) {
+    const { roles, cities } = JSON.parse(form.dataset.salaries ?? "{}") as { roles: SalaryRole[]; cities: City[] };
+    const symbols: Record<string, string> = { GBP: "£", USD: "$", EUR: "€" };
+    const $ = <T extends HTMLElement>(key: string) => out.querySelector<T>(`[data-calc-${key}]`)!;
+    const role = form.querySelector<HTMLSelectElement>("[name=role]")!;
+    const city = form.querySelector<HTMLSelectElement>("[name=city]")!;
+    const mine = form.querySelector<HTMLInputElement>("[name=mine]")!;
+    const symbolEl = form.querySelector<HTMLElement>("[data-calc-symbol]")!;
+
+    /* Rough percentile from the quartiles: linear between them, tapering outside. */
+    const percentile = (value: number, [p25, p50, p75]: number[]) => {
+      if (value <= p25) return Math.max(1, 25 - ((p25 - value) / (p50 - p25)) * 25);
+      if (value <= p50) return 25 + ((value - p25) / (p50 - p25)) * 25;
+      if (value <= p75) return 50 + ((value - p50) / (p75 - p50)) * 25;
+      return Math.min(99, 75 + ((value - p75) / (p75 - p50)) * 25);
+    };
+    const ordinal = (n: number) => {
+      const s = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+
+    const render = () => {
+      const r = roles.find((item) => item.id === role.value) ?? roles[0];
+      const c = cities.find((item) => item.id === city.value) ?? cities[0];
+      const band = r.bands[c.id as keyof SalaryRole["bands"]];
+      const sym = symbols[c.currency] ?? "";
+      const k = (v: number) => `${sym}${Math.round(v)}k`;
+      symbolEl.textContent = sym;
+
+      const floor = band[0] * 0.6;
+      const ceil = band[2] * 1.3;
+      const at = (v: number) => Math.min(100, Math.max(0, ((v - floor) / (ceil - floor)) * 100));
+
+      $("title").textContent = `${r.title} · ${c.label}`;
+      $("median").textContent = k(band[1]);
+      $("p25").textContent = k(band[0]);
+      $("p50").textContent = k(band[1]);
+      $("p75").textContent = k(band[2]);
+      $("bonus").textContent = r.bonus;
+      const change = $("change");
+      change.textContent = `${r.change >= 0 ? "+" : ""}${r.change.toFixed(1)}%`;
+      change.classList.toggle("text-up", r.change >= 0);
+      change.classList.toggle("text-down", r.change < 0);
+      $("band").style.left = `${at(band[0])}%`;
+      $("band").style.width = `${at(band[2]) - at(band[0])}%`;
+      $("median-tick").style.left = `${at(band[1])}%`;
+
+      const you = $("you");
+      const value = Number(mine.value) / 1000;
+      const verdict = $("verdict");
+      if (value > 0) {
+        const p = Math.round(percentile(value, band));
+        you.hidden = false;
+        you.style.left = `${at(value)}%`;
+        const diff = Math.round(((value - band[1]) / band[1]) * 100);
+        verdict.textContent = `${k(value)} sits around the ${ordinal(p)} percentile, ${Math.abs(diff)}% ${diff >= 0 ? "above" : "below"} the median for this role in ${c.label}.`;
+      } else {
+        you.hidden = true;
+        verdict.textContent = "Add your base salary to see where it sits.";
+      }
+
+      $("cities").replaceChildren(
+        ...cities.map((other) => {
+          const li = document.createElement("li");
+          const b = r.bands[other.id as keyof SalaryRole["bands"]];
+          li.className = `flex items-center justify-between rounded-lg px-3 py-2.5 text-[0.9375rem] ${other.id === c.id ? "bg-ink text-white" : "bg-paper"}`;
+          li.innerHTML = `<span></span><span class="text-sm font-medium tabular"></span>`;
+          li.children[0].textContent = other.label;
+          li.children[1].textContent = `${symbols[other.currency]}${b[1]}k`;
+          return li;
+        }),
+      );
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("role") && roles.some((item) => item.id === params.get("role"))) role.value = params.get("role")!;
+    if (params.get("city") && cities.some((item) => item.id === params.get("city"))) city.value = params.get("city")!;
+
+    form.addEventListener("input", render);
+    form.addEventListener("submit", (event) => event.preventDefault());
+    render();
+  }
+
+  const switcher = document.querySelector<HTMLElement>("[data-city-switch]");
+  switcher?.addEventListener("change", (event) => {
+    const value = (event.target as HTMLInputElement).value;
+    document.querySelectorAll<HTMLElement>("[data-city-panel]").forEach((panel) => (panel.hidden = panel.dataset.cityPanel !== value));
+  });
+</script>

@@ -1,0 +1,102 @@
+---
+import { Image } from "astro:assets";
+import Team from "@/components/home/Team.astro";
+import ClientLogos from "@/components/ui/ClientLogos.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Figures from "@/components/ui/Figures.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { about } from "@/config/about";
+import { employers } from "@/config/employers";
+import { figures } from "@/config/home";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+---
+
+<BaseLayout title="About" description={about.lead} image={about.image} imageAlt={about.imageAlt}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "About" }]} title={about.title} lead={about.lead} />
+
+  <figure class="shell">
+    <div class="aspect-video overflow-hidden rounded-card bg-wash lg:aspect-21/9">
+      <Image src={about.image} alt={about.imageAlt} widths={[640, 1024, 1600, 2000]} sizes="(min-width: 1400px) 1344px, 100vw" loading="eager" fetchpriority="high" class="size-full object-cover" />
+    </div>
+    <figcaption class="mt-3 text-[0.8125rem] text-muted">
+      Photo: <a href={about.imageCredit.url} class="hover:text-ink hover:underline">{about.imageCredit.name}</a>
+    </figcaption>
+  </figure>
+
+  <section class="section" aria-labelledby="story-title">
+    <div class="shell grid items-center gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-6">
+        <h2 id="story-title" class="text-display-lg">Three people, one print shop, one rule.</h2>
+        {about.story.map((paragraph) => <p class="mt-6 text-lead text-muted">{paragraph}</p>)}
+      </div>
+      <figure class="lg:col-span-5 lg:col-start-8">
+        <div class="group aspect-4/5 overflow-hidden rounded-card bg-wash">
+          <Image src={about.secondImage} alt={about.secondImageAlt} widths={[360, 540, 720]} sizes="(min-width: 1024px) 28rem, 100vw" class="photo-zoom size-full object-cover group-hover:scale-[1.03]" />
+        </div>
+        <figcaption class="mt-3 text-[0.8125rem] text-muted">
+          Photo: <a href={about.secondImageCredit.url} class="hover:text-ink hover:underline">{about.secondImageCredit.name}</a>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="shell mt-20">
+      <div class="card p-8 sm:p-10">
+        <Figures items={figures} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt-0" aria-labelledby="principles-title">
+    <div class="shell">
+      <SectionHead title="Four principles we would rather lose a search than break." id="principles-title" />
+      <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          about.principles.map((item, i) => (
+            <li class="reveal card flex flex-col p-6 lg:min-h-72" style={`--i:${i}`}>
+              <span class="grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+                <Icon name={item.icon} class="size-5" stroke={1.75} />
+              </span>
+              <h3 class="mt-auto pt-10 text-xl tracking-[-0.02em]">{item.title}</h3>
+              <p class="mt-2 text-[0.9375rem] text-muted">{item.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section pt-0" aria-labelledby="timeline-title">
+    <div class="shell grid gap-10 lg:grid-cols-12">
+      <SectionHead title="Seventeen years, briefly" id="timeline-title" class="lg:col-span-4 lg:self-start" />
+      <div class="card p-6 sm:p-8 lg:col-span-8">
+        <ol class="grid">
+          {
+            about.timeline.map((item, i) => (
+              <li class="reveal relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-4 pb-7 last:pb-0">
+                {i < about.timeline.length - 1 && <span class="absolute top-6 bottom-0 left-[0.7rem] w-px bg-accent-bright" aria-hidden="true" />}
+                <span class="relative mt-0.5 grid size-6 place-items-center rounded-full bg-accent-soft" aria-hidden="true">
+                  <span class="size-2 rounded-full bg-accent" />
+                </span>
+                <span class="grid gap-1 sm:grid-cols-[5rem_1fr] sm:gap-4">
+                  <span class="font-medium text-accent tabular">{item.year}</span>
+                  <span class="text-lg leading-snug">{item.text}</span>
+                </span>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-20 lg:pb-28" aria-label="Clients">
+    <div class="shell">
+      <ClientLogos names={employers.clients} label={employers.clientsLabel} />
+    </div>
+  </section>
+
+  <Team />
+  <Closing />
+</BaseLayout>

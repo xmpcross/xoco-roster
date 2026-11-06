@@ -1,0 +1,90 @@
+---
+import { getEntry } from "astro:content";
+import Icon from "@/components/ui/Icon.astro";
+import { formatSalary, formatShortDate, jobHref, type Job } from "@/lib/content";
+
+interface Props {
+  job: Job;
+  /** The sector's short name, shown in the meta line. */
+  sector?: string;
+  headingLevel?: "h2" | "h3";
+}
+
+const { job, sector, headingLevel = "h3" } = Astro.props;
+const { title, ref, client, location, workMode, type, salary, posted, seniority } = job.data;
+const icon = (await getEntry(job.data.sector))?.data.icon ?? "briefcase";
+const Heading = headingLevel;
+---
+
+<article class="job-row card group relative grid gap-x-6 gap-y-4 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:p-6 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
+  <span class="job-icon hidden size-12 place-items-center rounded-xl bg-paper text-ink sm:grid" aria-hidden="true">
+    <Icon name={icon} class="size-5" stroke={1.75} />
+  </span>
+  <div class="min-w-0">
+    <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem] text-muted">
+      {sector && <span class="font-medium text-accent">{sector}</span>}
+      <span>{seniority}</span>
+      <span aria-hidden="true">·</span>
+      <span>{ref}</span>
+    </p>
+    <Heading class="mt-1 text-title">
+      <a href={jobHref(job)} class="job-link after:absolute after:inset-0">{title}</a>
+    </Heading>
+    <p class="mt-1 text-[0.9375rem] text-muted">{client}</p>
+    <ul class="mt-3.5 flex flex-wrap gap-1.5">
+      <li class="chip bg-paper shadow-none"><Icon name="map-pin" class="size-3.5 text-muted" />{location}</li>
+      <li class="chip bg-paper shadow-none">{workMode}</li>
+      <li class="chip bg-paper shadow-none">{type}</li>
+    </ul>
+  </div>
+  <div class="flex items-end justify-between gap-6 sm:col-start-2 md:col-start-auto md:block md:text-right">
+    <p class="text-lg font-medium tracking-[-0.02em] tabular md:text-xl">{formatSalary(salary)}</p>
+    {salary.note && <p class="meta mt-0.5 hidden md:block">{salary.note}</p>}
+    <p class="mt-3 flex items-center justify-end gap-2.5 text-[0.8125rem] text-muted">
+      <time datetime={posted.toISOString()}>{formatShortDate(posted)}</time>
+      <span class="row-arrow grid size-8 place-items-center rounded-full bg-paper">
+        <Icon name="arrow-up-right" class="size-4" stroke={2} />
+      </span>
+    </p>
+  </div>
+</article>
+
+<style>
+  .job-row {
+    transition:
+      box-shadow 0.25s,
+      transform 0.25s var(--ease-out-expo);
+  }
+
+  .job-row:hover {
+    box-shadow: var(--shadow-float);
+    transform: translateY(-2px);
+  }
+
+  .job-icon,
+  .row-arrow,
+  .job-link {
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .job-row:hover .job-icon {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .job-row:hover .row-arrow {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .job-row a:focus-visible {
+    outline: none;
+  }
+
+  .job-row:has(a:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+</style>

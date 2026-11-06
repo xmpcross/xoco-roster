@@ -1,0 +1,38 @@
+---
+import Aurora from "@/components/ui/Aurora.astro";
+import Icon from "@/components/ui/Icon.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+const links = [
+  { label: "Sectors", href: "/sectors/" },
+  { label: "Salary guide", href: "/salary-guide/" },
+  { label: "Placements", href: "/placements/" },
+  { label: "Consultants", href: "/team/" },
+  { label: "Insights", href: "/insights/" },
+];
+---
+
+<BaseLayout title="Page not found" description="The page you were looking for does not exist or has moved." noindex>
+  <section class="relative isolate grid min-h-[calc(100svh-var(--header-h))] content-center overflow-hidden py-24 text-center">
+    <Aurora variant="horizon" />
+    <div class="shell flex flex-col items-center">
+      <p class="rise pill tone-amber">Ref 404 · Status: closed</p>
+      <p class="rise mt-6 text-[clamp(6rem,3rem+14vw,13rem)] leading-[0.85] font-medium tracking-[-0.06em] text-accent" style="--i:1" aria-hidden="true">404</p>
+      <h1 class="rise mt-8 max-w-2xl text-display-lg" style="--i:2">This position has already been filled.</h1>
+      <p class="rise mt-4 max-w-lg text-lead text-muted" style="--i:3">The page may have moved, or the link was mistyped. The live roles are a better place to look.</p>
+      <div class="rise mt-9 flex flex-wrap justify-center gap-3" style="--i:4">
+        <a href="/jobs/" class="btn btn-accent btn-lg">See live roles <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+        <a href="/" class="btn btn-outline btn-lg">Back home</a>
+      </div>
+      <nav class="rise mt-12 flex flex-wrap items-center justify-center gap-2" style="--i:5" aria-label="Popular pages">
+        {
+          links.map((link) => (
+            <a href={link.href} class="chip transition-colors hover:bg-ink hover:text-white hover:shadow-none">
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+    </div>
+  </section>
+</BaseLayout>

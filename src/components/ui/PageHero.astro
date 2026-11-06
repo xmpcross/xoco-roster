@@ -1,0 +1,46 @@
+---
+import Icon from "@/components/ui/Icon.astro";
+
+interface Props {
+  /** The trail above the title, last item is the current page. */
+  crumbs?: { label: string; href?: string }[];
+  title: string;
+  lead?: string;
+}
+
+const { crumbs = [], title, lead } = Astro.props;
+---
+
+<header class="pt-10 pb-14 sm:pt-14 lg:pb-20">
+  <div class="shell">
+    {
+      crumbs.length > 0 && (
+        <nav aria-label="Breadcrumb" class="rise text-[0.8125rem] text-muted">
+          <ol class="flex flex-wrap items-center gap-1.5">
+            {crumbs.map((crumb, i) => (
+              <li class="flex items-center gap-1.5">
+                {i > 0 && <Icon name="chevron-right" class="size-3.5 opacity-60" />}
+                {crumb.href ? (
+                  <a href={crumb.href} class="hover:text-ink">
+                    {crumb.label}
+                  </a>
+                ) : (
+                  <span aria-current="page" class="font-medium text-ink">
+                    {crumb.label}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+    <div class="mt-6 grid gap-x-10 gap-y-6 lg:grid-cols-12 lg:items-end">
+      <h1 class="rise text-display-xl lg:col-span-8" style="--i:1">{title}</h1>
+      <div class="rise lg:col-span-4" style="--i:2">
+        {lead && <p class="text-lead text-muted">{lead}</p>}
+        <slot name="aside" />
+      </div>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,298 @@
+---
+import FileField from "@/components/forms/FileField.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import { vacancy } from "@/config/employers";
+import { employmentTypes, seniorities, workModes } from "@/config/jobs";
+import { siteConfig } from "@/config/site";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getSectors } from "@/lib/content";
+
+const sectors = await getSectors();
+const form = siteConfig.forms.vacancy;
+const steps = ["The role", "Package and timing", "About you", "Review"];
+---
+
+<BaseLayout title={vacancy.title} description={vacancy.lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Employers", href: "/employers/" }, { label: "Submit a vacancy" }]} title={vacancy.title} lead={vacancy.lead} />
+
+  <section class="pb-24 lg:pb-32" aria-label="Vacancy form">
+    <div class="shell grid gap-6 lg:grid-cols-12 lg:gap-8">
+      <form class="vacancy card scroll-mt-32 p-6 sm:p-9 lg:col-span-8" action={form.action || undefined} method={form.method} enctype="multipart/form-data" data-form data-demo={form.action ? undefined : ""}>
+        <div data-form-body>
+          <ol class="grid grid-cols-4 gap-2" data-step-nav aria-label="Progress">
+            {
+              steps.map((step) => (
+                <li class="step-marker" data-step-marker>
+                  <span class="step-bar block h-1.5 rounded-full bg-wash" aria-hidden="true"></span>
+                  <span class="step-name mt-2.5 hidden text-[0.8125rem] font-medium text-muted sm:block">{step}</span>
+                </li>
+              ))
+            }
+          </ol>
+          <p class="sr-only" aria-live="polite" data-step-status></p>
+
+          <fieldset class="step mt-10 grid gap-6" data-step>
+            <legend class="text-display-md outline-none">The role</legend>
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div class="sm:col-span-2">
+                <label for="v-title" class="field-label">Job title</label>
+                <input id="v-title" name="job_title" type="text" required placeholder="e.g. Chief Financial Officer" class="field" />
+              </div>
+              <div>
+                <label for="v-sector" class="field-label">Sector</label>
+                <select id="v-sector" name="sector" required class="field">
+                  <option value="">Choose one</option>
+                  {sectors.map((sector) => <option value={sector.id}>{sector.data.title}</option>)}
+                </select>
+              </div>
+              <div>
+                <label for="v-location" class="field-label">Location</label>
+                <input id="v-location" name="location" type="text" required placeholder="City, or remote" class="field" />
+              </div>
+            </div>
+            <fieldset data-group>
+              <legend class="field-label">Level</legend>
+              <div class="flex flex-wrap gap-2">
+                {
+                  seniorities.map((level, i) => (
+                    <label class="choice">
+                      <input type="radio" name="level" value={level} required={i === 0} class="sr-only" />
+                      {level}
+                    </label>
+                  ))
+                }
+              </div>
+            </fieldset>
+            <div class="grid gap-6 sm:grid-cols-2">
+              <fieldset data-group>
+                <legend class="field-label">Work mode</legend>
+                <div class="flex flex-wrap gap-2">
+                  {
+                    workModes.map((mode, i) => (
+                      <label class="choice">
+                        <input type="radio" name="work_mode" value={mode} checked={i === 1} class="sr-only" />
+                        {mode}
+                      </label>
+                    ))
+                  }
+                </div>
+              </fieldset>
+              <fieldset data-group>
+                <legend class="field-label">Contract</legend>
+                <div class="flex flex-wrap gap-2">
+                  {
+                    employmentTypes.map((type, i) => (
+                      <label class="choice">
+                        <input type="radio" name="contract" value={type} checked={i === 0} class="sr-only" />
+                        {type}
+                      </label>
+                    ))
+                  }
+                </div>
+              </fieldset>
+            </div>
+          </fieldset>
+
+          <fieldset class="step mt-10 grid gap-6" data-step>
+            <legend class="text-display-md outline-none">Package and timing</legend>
+            <div class="grid gap-6 sm:grid-cols-[1fr_1fr_8rem]">
+              <div>
+                <label for="v-min" class="field-label">Base from</label>
+                <input id="v-min" name="salary_min" type="number" inputmode="numeric" min="0" step="1000" placeholder="180000" class="field" />
+              </div>
+              <div>
+                <label for="v-max" class="field-label">Base to</label>
+                <input id="v-max" name="salary_max" type="number" inputmode="numeric" min="0" step="1000" placeholder="220000" class="field" />
+              </div>
+              <div>
+                <label for="v-currency" class="field-label">Currency</label>
+                <select id="v-currency" name="currency" class="field">
+                  <option>GBP</option>
+                  <option>USD</option>
+                  <option>EUR</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label for="v-extras" class="field-label">Bonus, equity and benefits (optional)</label>
+              <input id="v-extras" name="extras" type="text" placeholder="e.g. 40% bonus, options, car allowance" class="field" />
+            </div>
+            <fieldset data-group>
+              <legend class="field-label">How would you like to work with us?</legend>
+              <div class="flex flex-wrap gap-2">
+                {
+                  vacancy.services.map((service, i) => (
+                    <label class="choice">
+                      <input type="radio" name="service" value={service} checked={i === vacancy.services.length - 1} class="sr-only" />
+                      {service}
+                    </label>
+                  ))
+                }
+              </div>
+            </fieldset>
+            <div>
+              <label for="v-urgency" class="field-label">When do you need someone in post?</label>
+              <select id="v-urgency" name="urgency" required class="field">
+                <option value="">Choose one</option>
+                {vacancy.urgency.map((option) => <option>{option}</option>)}
+              </select>
+            </div>
+            <div>
+              <label for="v-brief" class="field-label">Anything we should know (optional)</label>
+              <textarea id="v-brief" name="brief" rows="4" placeholder="Why the role is open, who it reports to, what success looks like in a year." class="field"></textarea>
+            </div>
+            <FileField id="v-spec" name="job_spec" label="Job description (optional)" />
+          </fieldset>
+
+          <fieldset class="step mt-10 grid gap-6" data-step>
+            <legend class="text-display-md outline-none">About you</legend>
+            <div class="grid gap-6 sm:grid-cols-2">
+              <div>
+                <label for="v-name" class="field-label">Your name</label>
+                <input id="v-name" name="name" type="text" autocomplete="name" required class="field" />
+              </div>
+              <div>
+                <label for="v-role" class="field-label">Your job title (optional)</label>
+                <input id="v-role" name="your_title" type="text" autocomplete="organization-title" class="field" />
+              </div>
+              <div>
+                <label for="v-company" class="field-label">Company</label>
+                <input id="v-company" name="company" type="text" autocomplete="organization" required class="field" />
+              </div>
+              <div>
+                <label for="v-email" class="field-label">Work email</label>
+                <input id="v-email" name="email" type="email" autocomplete="email" required class="field" />
+              </div>
+              <div>
+                <label for="v-phone" class="field-label">Phone</label>
+                <input id="v-phone" name="phone" type="tel" autocomplete="tel" required class="field" />
+              </div>
+            </div>
+            <label class="flex items-start gap-3 text-sm text-muted" data-summary-skip>
+              <input type="checkbox" name="consent" required class="check mt-0.5" />
+              <span>I agree to Roster using these details to respond to this brief, as described in the <a href="/privacy/" class="link text-ink">privacy notice</a>.</span>
+            </label>
+          </fieldset>
+
+          <div class="step mt-10" data-step>
+            <h2 class="text-display-md outline-none">Review your brief</h2>
+            <p class="mt-3 text-muted">Check the details below. You can go back and change anything.</p>
+            <dl class="summary mt-6 rounded-xl bg-paper px-4 sm:px-5" data-summary></dl>
+            <button type="submit" class="btn btn-accent btn-lg mt-8">Send brief <Icon name="send" class="size-4" stroke={2} /></button>
+          </div>
+
+          <div class="mt-10 flex items-center justify-between gap-4" data-step-nav>
+            <button type="button" class="btn btn-outline" data-prev><Icon name="arrow-left" class="size-4" stroke={2} /> Back</button>
+            <button type="button" class="btn btn-primary" data-next>Continue <Icon name="arrow-right" class="btn-arrow" stroke={2} /></button>
+          </div>
+        </div>
+
+        <div class="grid gap-4" role="status" data-form-success hidden>
+          <span class="grid size-12 place-items-center rounded-xl bg-accent-soft text-accent">
+            <Icon name="circle-check" class="size-6" stroke={1.75} />
+          </span>
+          <p class="mt-2 text-display-md">Brief received.</p>
+          <p class="max-w-xl text-lead text-muted">A partner in the right practice will read it today and call you within 24 hours. A copy is on its way to your inbox.</p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <a href="/placements/" class="btn btn-primary">Read recent placements <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+            <button type="button" class="btn btn-outline" data-form-reset>Brief another role</button>
+          </div>
+        </div>
+      </form>
+
+      <aside class="lg:col-span-4">
+        <div class="grid gap-4 lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+          <div class="card p-5 sm:p-6">
+            <p class="font-medium">What happens next</p>
+            <ol class="mt-4 grid gap-2">
+              {
+                vacancy.next.map((item) => (
+                  <li class="rounded-xl bg-paper p-4">
+                    <p class="text-[0.9375rem] font-medium">{item.title}</p>
+                    <p class="mt-1 text-sm text-muted">{item.body}</p>
+                  </li>
+                ))
+              }
+            </ol>
+          </div>
+          <div class="rounded-card bg-accent-soft p-5 sm:p-6">
+            <p class="font-medium">Rather talk it through?</p>
+            <p class="mt-1 text-sm text-muted">Book 20 minutes with a partner instead.</p>
+            <a href={siteConfig.actions.book.href} class="btn btn-accent btn-sm mt-4">{siteConfig.actions.book.label}</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .step-bar {
+    transition: background-color 0.3s;
+  }
+
+  .step-marker[data-done] .step-bar {
+    background: var(--ink);
+  }
+
+  .step-marker[data-current] .step-bar {
+    background: var(--accent);
+  }
+
+  .step-marker[data-done] .step-name {
+    color: var(--ink);
+  }
+
+  .step-marker[data-current] .step-name {
+    display: block;
+    color: var(--accent);
+  }
+
+  .step > legend,
+  .step > h2 {
+    float: left;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .summary :global(.summary-row:last-child) {
+    border-bottom: 0;
+  }
+
+  .choice {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 1.1rem;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--surface);
+    box-shadow: 0 0 0 1px var(--line);
+    transition:
+      background-color 0.15s,
+      color 0.15s,
+      box-shadow 0.15s;
+  }
+
+  .choice:hover {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 25%, var(--line));
+  }
+
+  .choice:has(input:checked) {
+    background: var(--accent-soft);
+    color: var(--accent);
+    box-shadow: 0 0 0 1.5px var(--accent);
+  }
+
+  .choice:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  :global(.was-validated) fieldset:has(input[type="radio"]:invalid) .choice {
+    box-shadow: 0 0 0 1px var(--down);
+  }
+</style>

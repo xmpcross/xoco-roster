@@ -1,0 +1,96 @@
+---
+import { Image } from "astro:assets";
+import Closing from "@/components/ui/Closing.astro";
+import Icon from "@/components/ui/Icon.astro";
+import PageHero from "@/components/ui/PageHero.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { findPerson, getJobs, getSectors, getTeam, sectorHref, tally } from "@/lib/content";
+
+const [sectors, jobs, team] = await Promise.all([getSectors(), getJobs(), getTeam()]);
+const counts = tally(jobs.map((job) => job.data.sector.id));
+const lead = "Six practices, each led by a partner or principal who worked in the field before recruiting for it.";
+---
+
+<BaseLayout title="Sectors" description={lead}>
+  <PageHero crumbs={[{ label: "Home", href: "/" }, { label: "Sectors" }]} title="Practices" lead={lead} />
+
+  <section class="pb-24 lg:pb-32" aria-label="All practices">
+    <div class="shell grid gap-4 md:grid-cols-2">
+      {
+        sectors.map((sector, i) => {
+          const person = findPerson(team, sector.data.lead.id);
+          return (
+            <article class="practice-card card reveal group relative flex flex-col p-2" style={`--i:${i % 2}`}>
+              <div class="relative aspect-16/10 overflow-hidden rounded-[0.8rem] bg-wash">
+                <Image src={sector.data.image} alt={sector.data.imageAlt} widths={[480, 720, 960]} sizes="(min-width: 768px) 50vw, 100vw" loading={i < 2 ? "eager" : "lazy"} class="photo-zoom size-full object-cover group-hover:scale-[1.03]" />
+                <span class="absolute top-3 left-3 grid size-10 place-items-center rounded-xl bg-surface/90 backdrop-blur" aria-hidden="true">
+                  <Icon name={sector.data.icon} class="size-4.5" />
+                </span>
+              </div>
+              <div class="flex flex-1 flex-col p-5 pb-4 sm:p-6 sm:pb-5">
+                <h2 class="text-display-md">
+                  <a href={sectorHref(sector.id)} class="after:absolute after:inset-0">
+                    {sector.data.title}
+                  </a>
+                </h2>
+                <p class="mt-2 text-muted">{sector.data.summary}</p>
+                <div class="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-6 text-sm">
+                  <span class="flex items-center gap-2 text-muted">
+                    <span class="live-dot" aria-hidden="true" />
+                    <span class="tabular">{counts[sector.id] ?? 0} live roles</span>
+                  </span>
+                  {
+                    person && (
+                      <span class="flex items-center gap-2 text-muted">
+                        <Image src={person.data.photo} alt="" width={64} height={64} class="size-6 rounded-full object-cover object-top" />
+                        Led by {person.data.name}
+                      </span>
+                    )
+                  }
+                  <span class="practice-arrow ml-auto grid size-8 place-items-center rounded-full bg-paper" aria-hidden="true">
+                    <Icon name="arrow-up-right" class="size-4" stroke={2} />
+                  </span>
+                </div>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+  </section>
+
+  <Closing />
+</BaseLayout>
+
+<style>
+  .practice-card {
+    transition:
+      box-shadow 0.25s,
+      transform 0.25s var(--ease-out-expo);
+  }
+
+  .practice-card:hover {
+    box-shadow: var(--shadow-float);
+    transform: translateY(-2px);
+  }
+
+  .practice-arrow {
+    transition:
+      background-color 0.2s,
+      color 0.2s;
+  }
+
+  .practice-card:hover .practice-arrow {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .practice-card a:focus-visible {
+    outline: none;
+  }
+
+  .practice-card:has(a:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+</style>

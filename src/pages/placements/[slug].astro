@@ -1,0 +1,130 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { render } from "astro:content";
+import ConsultantPanel from "@/components/people/ConsultantPanel.astro";
+import PlacementCard from "@/components/placements/PlacementCard.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { findPerson, formatDate, getPlacements, getSectors, getTeam, sectorHref } from "@/lib/content";
+
+export const getStaticPaths = (async () => {
+  const placements = await getPlacements();
+  return placements.map((placement) => ({
+    params: { slug: placement.id },
+    props: { placement, more: placements.filter((other) => other.id !== placement.id).slice(0, 3) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { placement, more } = Astro.props;
+const { Content } = await render(placement);
+const [sectors, team] = await Promise.all([getSectors(), getTeam()]);
+const sector = sectors.find((item) => item.id === placement.data.sector.id);
+const consultant = findPerson(team, placement.data.consultant.id);
+const shortName = (id: string) => sectors.find((item) => item.id === id)?.data.short;
+const { title, role, client, location, date, summary, metrics, quote } = placement.data;
+---
+
+<BaseLayout title={title} description={summary}>
+  <article>
+    <header class="pt-10 sm:pt-14">
+      <div class="shell">
+        <nav aria-label="Breadcrumb" class="rise text-[0.8125rem] text-muted">
+          <ol class="flex flex-wrap items-center gap-1.5">
+            <li><a href="/placements/" class="hover:text-ink">Placements</a></li>
+            <li class="flex" aria-hidden="true"><Icon name="chevron-right" class="size-3.5 opacity-60" /></li>
+            <li aria-current="page" class="font-medium text-ink">{role}</li>
+          </ol>
+        </nav>
+        <h1 class="rise mt-6 max-w-4xl text-display-xl" style="--i:1">{title}</h1>
+        <p class="rise mt-5 max-w-2xl text-lead text-muted" style="--i:2">{summary}</p>
+        <dl class="rise mt-12 grid gap-3 sm:grid-cols-3" style="--i:3">
+          {
+            metrics.map((metric) => (
+              <div class="flex flex-col rounded-card bg-accent-soft p-6 sm:p-8">
+                <dt class="order-2 mt-2 text-[0.9375rem] text-ink-soft">{metric.label}</dt>
+                <dd class="text-[clamp(2.75rem,2rem+2.4vw,4rem)] leading-none font-medium tracking-[-0.045em] text-accent tabular">{metric.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </header>
+
+    <div class="shell grid gap-12 py-14 lg:grid-cols-12 lg:py-20">
+      <aside class="lg:col-span-4">
+        <div class="grid gap-4 lg:sticky lg:top-[calc(var(--sticky-top)+2rem)] follow-header">
+          <dl class="card grid gap-1.5 p-5 text-[0.9375rem]">
+            {
+              [
+                ["Role", role],
+                ["Client", client],
+                ["Location", location],
+                ["Published", formatDate(date)],
+              ].map(([label, value]) => (
+                <div class="grid grid-cols-[5.5rem_1fr] gap-3 rounded-lg bg-paper px-3 py-2.5">
+                  <dt class="text-muted">{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))
+            }
+            {
+              sector && (
+                <div class="grid grid-cols-[5.5rem_1fr] gap-3 rounded-lg bg-paper px-3 py-2.5">
+                  <dt class="text-muted">Practice</dt>
+                  <dd>
+                    <a href={sectorHref(sector.id)} class="link">
+                      {sector.data.title}
+                    </a>
+                  </dd>
+                </div>
+              )
+            }
+          </dl>
+          {consultant && <ConsultantPanel person={consultant} label="Led by" />}
+        </div>
+      </aside>
+      <div class="min-w-0 lg:col-span-7 lg:col-start-6">
+        <div class="prose">
+          <Content />
+        </div>
+        {
+          quote && (
+            <figure class="card mt-14 p-7 sm:p-9">
+              <Icon name="quote" class="size-8 text-accent-bright" stroke={1.5} />
+              <blockquote class="mt-5 text-[clamp(1.35rem,1.15rem+0.6vw,1.65rem)] leading-[1.35] tracking-[-0.015em]">“{quote.text}”</blockquote>
+              <figcaption class="mt-6">
+                <span class="block font-medium">{quote.name}</span>
+                <span class="block text-sm text-muted">{quote.role}</span>
+              </figcaption>
+            </figure>
+          )
+        }
+      </div>
+    </div>
+  </article>
+
+  {
+    more.length > 0 && (
+      <section class="section pt-6" aria-labelledby="more-title">
+        <div class="shell">
+          <SectionHead title="More placements" id="more-title">
+            <a href="/placements/" class="btn btn-outline">
+              All case studies <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+            </a>
+          </SectionHead>
+          <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {more.map((item) => (
+              <PlacementCard placement={item} sector={shortName(item.data.sector.id)} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <Closing />
+</BaseLayout>

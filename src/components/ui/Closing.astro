@@ -1,0 +1,45 @@
+---
+import { Image } from "astro:assets";
+import Aurora from "@/components/ui/Aurora.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import { getTeam } from "@/lib/content";
+
+/** The call to action at the foot of most pages: one door for employers, one for candidates. */
+const { employer, candidate, book } = siteConfig.actions;
+const faces = (await getTeam()).slice(0, 5);
+---
+
+<section class="closing relative isolate overflow-hidden" aria-labelledby="closing-title">
+  <Aurora variant="horizon" />
+  <div class="shell relative py-28 text-center sm:py-36">
+    <div class="reveal flex justify-center" aria-hidden="true">
+      {
+        faces.map((person, i) => (
+          <Image
+            src={person.data.photo}
+            alt=""
+            width={96}
+            height={96}
+            class="size-12 rounded-full object-cover object-top ring-4 ring-paper"
+            style={`margin-left:${i ? "-0.75rem" : "0"}`}
+          />
+        ))
+      }
+    </div>
+    <h2 id="closing-title" class="reveal mx-auto mt-8 max-w-2xl text-display-lg">Talk to the partner who would run your search</h2>
+    <p class="reveal mx-auto mt-4 max-w-lg text-lead text-muted">
+      Hiring a senior leader, or thinking about your next move? Either way, you speak to a partner on the first call.
+    </p>
+    <div class="reveal mt-9 flex flex-wrap justify-center gap-3">
+      <a href={employer.href} class="btn btn-primary btn-lg">
+        {employer.label}
+        <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+      </a>
+      <a href={candidate.href} class="btn btn-outline btn-lg">{candidate.label}</a>
+    </div>
+    <p class="reveal mt-6 text-[0.9375rem] text-muted">
+      Or <a href={book.href} class="link text-ink">{book.label.toLowerCase()}</a> with a partner.
+    </p>
+  </div>
+</section>

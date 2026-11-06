@@ -1,0 +1,170 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from "astro";
+import { Image } from "astro:assets";
+import { render } from "astro:content";
+import JobRow from "@/components/jobs/JobRow.astro";
+import ConsultantPanel from "@/components/people/ConsultantPanel.astro";
+import PersonCard from "@/components/people/PersonCard.astro";
+import PlacementCard from "@/components/placements/PlacementCard.astro";
+import RangeChart from "@/components/salary/RangeChart.astro";
+import Closing from "@/components/ui/Closing.astro";
+import Figures from "@/components/ui/Figures.astro";
+import Icon from "@/components/ui/Icon.astro";
+import SectionHead from "@/components/ui/SectionHead.astro";
+import { salaryRoles } from "@/config/salaries";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { findPerson, getJobs, getPlacements, getSectors, getTeam } from "@/lib/content";
+
+export const getStaticPaths = (async () => {
+  const sectors = await getSectors();
+  return sectors.map((sector) => ({ params: { slug: sector.id }, props: { sector } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { sector } = Astro.props;
+const { Content } = await render(sector);
+const [jobs, placements, team] = await Promise.all([getJobs(), getPlacements(), getTeam()]);
+const roles = jobs.filter((job) => job.data.sector.id === sector.id);
+const cases = placements.filter((item) => item.data.sector.id === sector.id).slice(0, 3);
+const lead = findPerson(team, sector.data.lead.id);
+const people = team.filter((person) => person.data.sectors.some((ref) => ref.id === sector.id));
+const bands = salaryRoles.filter((role) => role.sector === sector.id).map((role) => ({ title: role.title, band: role.bands.london, change: role.change, bonus: role.bonus }));
+const { title, summary, description, image, imageAlt, imageCredit, specialisms, stats, short } = sector.data;
+---
+
+<BaseLayout title={title} description={description} image={image} imageAlt={imageAlt}>
+  <header class="pt-10 sm:pt-14">
+    <div class="shell">
+      <nav aria-label="Breadcrumb" class="rise text-[0.8125rem] text-muted">
+        <ol class="flex flex-wrap items-center gap-1.5">
+          <li><a href="/sectors/" class="hover:text-ink">Sectors</a></li>
+          <li class="flex" aria-hidden="true"><Icon name="chevron-right" class="size-3.5 opacity-60" /></li>
+          <li aria-current="page" class="font-medium text-ink">{short}</li>
+        </ol>
+      </nav>
+      <div class="mt-6 grid gap-x-10 gap-y-6 lg:grid-cols-12 lg:items-end">
+        <h1 class="rise text-display-xl lg:col-span-8" style="--i:1">{title}</h1>
+        <div class="rise lg:col-span-4" style="--i:2">
+          <p class="text-lead text-muted">{summary}</p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href={`/jobs/?sector=${sector.id}`} class="btn btn-primary">{roles.length} live roles <Icon name="arrow-right" class="btn-arrow" stroke={2} /></a>
+            <a href="/employers/submit-vacancy/" class="btn btn-outline">Brief us</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figure class="rise shell mt-12" style="--i:3">
+      <div class="aspect-video overflow-hidden rounded-card bg-wash lg:aspect-21/8">
+        <Image src={image} alt={imageAlt} widths={[640, 1024, 1600, 2000]} sizes="(min-width: 1400px) 1344px, 100vw" loading="eager" fetchpriority="high" class="size-full object-cover" />
+      </div>
+      {
+        imageCredit && (
+          <figcaption class="mt-3 text-[0.8125rem] text-muted">
+            Photo: <a href={imageCredit.url} class="hover:text-ink hover:underline">{imageCredit.name}</a>
+          </figcaption>
+        )
+      }
+    </figure>
+  </header>
+
+  <section class="section" aria-labelledby="practice-title">
+    <div class="shell">
+      <div class="card p-8 sm:p-10">
+        <Figures items={stats} />
+      </div>
+      <div class="mt-20 grid gap-12 lg:grid-cols-12">
+        <div class="lg:col-span-7">
+          <h2 id="practice-title" class="sr-only">The practice</h2>
+          <div class="prose">
+            <Content />
+          </div>
+        </div>
+        <aside class="grid content-start gap-4 lg:col-span-4 lg:col-start-9">
+          <div class="card p-5">
+            <p class="text-[0.8125rem] text-muted">What we hire</p>
+            <ul class="mt-4 grid gap-1.5">
+              {
+                specialisms.map((item) => (
+                  <li class="flex items-center gap-3 rounded-lg bg-paper px-3 py-2.5 text-[0.9375rem] font-medium">
+                    <Icon name="check" class="size-4 text-accent" stroke={2.25} />
+                    {item}
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+          {lead && <ConsultantPanel person={lead} label="Practice lead" />}
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  {
+    roles.length > 0 && (
+      <section class="section pt-0" aria-labelledby="roles-title">
+        <div class="shell">
+          <SectionHead title={`Open ${short.toLowerCase()} mandates`} id="roles-title">
+            <a href={`/jobs/?sector=${sector.id}`} class="btn btn-outline">
+              Filter all roles <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+            </a>
+          </SectionHead>
+          <div class="mt-10 grid gap-3">
+            {roles.map((job) => (
+              <JobRow job={job} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    bands.length > 0 && (
+      <section class="section pt-0" aria-labelledby="pay-title">
+        <div class="shell">
+          <SectionHead title="What these roles pay in London" lead="Base salary bands from offers we negotiated in the last twelve months." id="pay-title">
+            <a href="/salary-guide/" class="btn btn-outline">
+              Compare cities <Icon name="arrow-right" class="btn-arrow" stroke={2} />
+            </a>
+          </SectionHead>
+          <div class="card mt-10 px-5 py-3 sm:px-8 sm:py-5 [&_tbody_tr:last-child]:border-b-0">
+            <RangeChart rows={bands} currency="GBP" bonus caption={`London base salary bands for ${title} roles, in thousands of pounds`} />
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    cases.length > 0 && (
+      <section class="section pt-0" aria-labelledby="cases-title">
+        <div class="shell">
+          <SectionHead title="Recent searches in this practice" id="cases-title" />
+          <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {cases.map((placement) => (
+              <PlacementCard placement={placement} sector={short} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    people.length > 1 && (
+      <section class="section pt-0" aria-labelledby="people-title">
+        <div class="shell">
+          <SectionHead title="Who you will work with" id="people-title" />
+          <div class="mt-10 grid gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+            {people.map((person) => (
+              <PersonCard person={person} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <Closing />
+</BaseLayout>

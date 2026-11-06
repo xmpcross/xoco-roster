@@ -1,0 +1,43 @@
+---
+import { Image } from "astro:assets";
+import Icon from "@/components/ui/Icon.astro";
+import { siteConfig } from "@/config/site";
+import { personHref, type Person } from "@/lib/content";
+
+interface Props {
+  person: Person;
+  /** The caption above the name, e.g. "Your consultant". */
+  label?: string;
+  class?: string;
+}
+
+const { person, label = "Your consultant", class: className } = Astro.props;
+const { name, role, photo, photoAlt, email, phone, booking, office } = person.data;
+---
+
+<div class:list={["card p-5", className]}>
+  <p class="text-[0.8125rem] text-muted">{label}</p>
+  <a href={personHref(person)} class="group mt-4 flex items-center gap-4">
+    <Image src={photo} alt={photoAlt} widths={[128, 192]} sizes="4rem" class="size-14 shrink-0 rounded-full object-cover object-top" />
+    <span class="min-w-0">
+      <span class="block text-lg leading-tight font-medium tracking-[-0.015em] group-hover:text-accent">{name}</span>
+      <span class="mt-1 block text-sm text-muted">{role}, {office}</span>
+    </span>
+  </a>
+  <ul class="mt-5 grid gap-1 text-[0.9375rem]">
+    <li>
+      <a href={`tel:${phone.replace(/\s/g, "")}`} class="flex items-center gap-3 rounded-lg bg-paper px-3 py-2.5 hover:text-accent">
+        <Icon name="phone" class="size-4 text-muted" />{phone}
+      </a>
+    </li>
+    <li>
+      <a href={`mailto:${email}`} class="flex items-center gap-3 rounded-lg bg-paper px-3 py-2.5 hover:text-accent">
+        <Icon name="mail" class="size-4 text-muted" />{email}
+      </a>
+    </li>
+  </ul>
+  <a href={booking ?? siteConfig.actions.book.href} class="btn btn-primary btn-sm mt-5 w-full">
+    <Icon name="calendar" class="size-4" stroke={2} />
+    Book a call with {name.split(" ")[0]}
+  </a>
+</div>
